@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>₹1,00,000 Savings Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; padding: 16px; display: flex; justify-content: center; }
+    .app { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; }
+    
+    .header { text-align: center; margin-top: 6px; }
+    .header h1 { color: #38bdf8; font-size: 1.4rem; }
+    .header p { color: #94a3b8; font-size: 0.8rem; margin-top: 4px; }
+    
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+    .percent { font-size: 2.2rem; font-weight: 800; color: #10b981; text-align: center; }
+    .bar-bg { width: 100%; height: 10px; background: #334155; border-radius: 5px; overflow: hidden; margin: 10px 0 16px 0; }
+    .bar-fill { height: 100%; width: 0%; background: #10b981; transition: width 0.3s ease; }
+    
+    .stats { display: flex; justify-content: space-between; border-top: 1px solid #334155; padding-top: 12px; text-align: center; }
+    .stat span { font-size: 0.75rem; color: #94a3b8; display: block; }
+    .stat strong { font-size: 0.95rem; }
+
+    /* Filter Tabs */
+    .tabs { display: flex; gap: 6px; justify-content: center; }
+    .tab-btn { background: #334155; color: #cbd5e1; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; flex: 1; text-align: center; }
+    .tab-btn.active { background: #0284c7; color: #fff; }
+
+    /* Grid Box */
+    .grid-box { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 12px; max-height: 360px; overflow-y: auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 6px; }
+    
+    .cell { background: #334155; color: #fff; padding: 10px 4px; border-radius: 8px; text-align: center; font-size: 0.8rem; font-weight: bold; cursor: pointer; user-select: none; position: relative; transition: all 0.2s; }
+    .cell.done { background: #10b981; color: #000; }
+    .cell.done::after { content: "🔒"; font-size: 0.65rem; position: absolute; top: 2px; right: 3px; }
+    
+    /* Edit mode highlighted cells */
+    body.unlock-mode .cell.done { border: 2px solid #f59e0b; background: #d97706; color: #fff; }
+    body.unlock-mode .cell.done::after { content: "🔓"; }
+
+    /* Controls */
+    .controls { display: flex; flex-direction: column; gap: 8px; }
+    .btn-unlock { background: #334155; color: #fbbf24; border: 1px solid #f59e0b; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.9rem; transition: 0.2s; }
+    .btn-unlock.active { background: #d97706; color: #fff; border-color: #f59e0b; }
+    
+    .btn-reset { background: #ef4444; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.8rem; opacity: 0.8; }
+    .btn-reset:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+    <div class="header">
+      <h1>₹1,00,000 Savings Tracker</h1>
+      <p>Click karke box LOCK karein!</p>
+    </div>
+
+    <div class="card">
+      <div class="percent" id="pct">0%</div>
+      <div class="bar-bg"><div class="bar-fill" id="fill"></div></div>
+      <div class="stats">
+        <div class="stat"><span>Saved</span><strong id="saved" style="color:#10b981">₹0</strong></div>
+        <div class="stat"><span>Remaining</span><strong id="rem" style="color:#f43f5e">₹1,00,000</strong></div>
+        <div class="stat"><span>Target</span><strong>₹1,00,000</strong></div>
+      </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="setFilter('ALL', this)">All</button>
+      <button class="tab-btn" onclick="setFilter(100, this)">₹100</button>
+      <button class="tab-btn" onclick="setFilter(200, this)">₹200</button>
+      <button class="tab-btn" onclick="setFilter(500, this)">₹500</button>
+    </div>
+
+    <div class="grid-box">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button class="btn-unlock" id="unlock-btn" onclick="toggleUnlockMode()">🔒 Lock Active (Tap to Enable Unlock Mode)</button>
+      <button class="btn-reset" onclick="resetApp()">Reset All Progress</button>
+    </div>
+  </div>
+
+  <script>
+    const TOTAL = 100000;
+    
+    // Total ₹1,00,000 Breakdown using only 100, 200, 500:
+    // 100 x ₹100 = ₹10,000
+    // 150 x ₹200 = ₹30,000
+    // 120 x ₹500 = ₹60,000
+    const boxes = [
+      ...Array(100).fill(100),
+      ...Array(150).fill(200),
+      ...Array(120).fill(500)
+    ];
+
+    let state = JSON.parse(localStorage.getItem('my_savings_v3')) || new Array(boxes.length).fill(false);
+    let isUnlockMode = false;
+    let currentFilter = 'ALL';
+
+    function updateStats() {
+      let saved = state.reduce((acc, val, i) => val ? acc + boxes[i] : acc, 0);
+      let rem = TOTAL - saved;
+      let pct = ((saved / TOTAL) * 100).toFixed(1);
+
+      document.getElementById('saved').innerText = `₹${saved.toLocaleString('en-IN')}`;
+      document.getElementById('rem').innerText = `₹${rem.toLocaleString('en-IN')}`;
+      document.getElementById('pct').innerText = `${pct}%`;
+      document.getElementById('fill').style.width = `${pct}%`;
+      
+      localStorage.setItem('my_savings_v3', JSON.stringify(state));
+    }
+
+    function toggleCell(index) {
+      if (state[index]) {
+        if (isUnlockMode) {
+          state[index] = false;
+        } else {
+          alert("Yeh box LOCKED hai! Isse unlock karne ke liye niche 'Enable Unlock Mode' par click karein.");
+          return;
+        }
+      } else {
+        state[index] = true;
+      }
+      render();
+      updateStats();
+    }
+
+    function toggleUnlockMode() {
+      isUnlockMode = !isUnlockMode;
+      const btn = document.getElementById('unlock-btn');
+      if (isUnlockMode) {
+        document.body.classList.add('unlock-mode');
+        btn.classList.add('active');
+        btn.innerText = "🔓 UNLOCK MODE ON (Tap any locked box to unlock)";
+      } else {
+        document.body.classList.remove('unlock-mode');
+        btn.classList.remove('active');
+        btn.innerText = "🔒 Lock Active (Tap to Enable Unlock Mode)";
+      }
+      render();
+    }
+
+    function setFilter(amt, btn) {
+      currentFilter = amt;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    }
+
+    function render() {
+      const g = document.getElementById('grid');
+      g.innerHTML = '';
+      
+      boxes.forEach((amt, i) => {
+        if (currentFilter !== 'ALL' && amt !== currentFilter) return;
+
+        const d = document.createElement('div');
+        d.className = `cell ${state[i] ? 'done' : ''}`;
+        d.innerText = `₹${amt}`;
+        d.onclick = () => toggleCell(i);
+        g.appendChild(d);
+      });
+    }
+
+    function resetApp() {
+      if(confirm('Kya aap saara progress reset karna chahte hain?')) {
+        state.fill(false);
+        render();
+        updateStats();
+      }
+    }
+
+    render();
+    updateStats();
+  </script>
+</body>
+</html>
