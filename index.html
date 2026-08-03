@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
@@ -86,12 +86,101 @@
   </div>
 
   <script>
+    // --- AUDIO SYSTEM (Web Audio API) ---
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playCoinSound() {
+      initAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      
+      // Note 1 (E6)
+      const osc1 = audioCtx.createOscillator();
+      const gain1 = audioCtx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(1318.51, now);
+      gain1.gain.setValueAtTime(0.2, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      osc1.connect(gain1);
+      gain1.connect(audioCtx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.15);
+
+      // Note 2 (B6 - Coin Chime)
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(1975.53, now + 0.07);
+      gain2.gain.setValueAtTime(0.3, now + 0.07);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start(now + 0.07);
+      osc2.stop(now + 0.35);
+    }
+
+    function playUnlockSound() {
+      initAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(500, now);
+      osc.frequency.exponentialRampToValueAtTime(220, now + 0.12);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    }
+
+    function playClickSound() {
+      initAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(700, now);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    }
+
+    function playResetSound() {
+      initAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.linearRampToValueAtTime(100, now + 0.25);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    }
+
+    // --- MAIN APP LOGIC ---
     const TOTAL = 100000;
     
-    // Total ₹1,00,000 Breakdown using only 100, 200, 500:
-    // 100 x ₹100 = ₹10,000
-    // 150 x ₹200 = ₹30,000
-    // 120 x ₹500 = ₹60,000
     const boxes = [
       ...Array(100).fill(100),
       ...Array(150).fill(200),
@@ -119,18 +208,21 @@
       if (state[index]) {
         if (isUnlockMode) {
           state[index] = false;
+          playUnlockSound();
         } else {
           alert("Yeh box LOCKED hai! Isse unlock karne ke liye niche 'Enable Unlock Mode' par click karein.");
           return;
         }
       } else {
         state[index] = true;
+        playCoinSound();
       }
       render();
       updateStats();
     }
 
     function toggleUnlockMode() {
+      playClickSound();
       isUnlockMode = !isUnlockMode;
       const btn = document.getElementById('unlock-btn');
       if (isUnlockMode) {
@@ -146,6 +238,7 @@
     }
 
     function setFilter(amt, btn) {
+      playClickSound();
       currentFilter = amt;
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
@@ -169,6 +262,7 @@
 
     function resetApp() {
       if(confirm('Kya aap saara progress reset karna chahte hain?')) {
+        playResetSound();
         state.fill(false);
         render();
         updateStats();
