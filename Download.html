@@ -1,1 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#070d1b">
+    <title>Download Smart Save</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        :root {
+            --bg-color: #070d1b;
+            --card-bg: #0f172a;
+            --border-color: #1e293b;
+            --text-main: #f8fafc;
+            --text-desc: #94a3b8;
+            --feature-text: #cbd5e1;
+            --btn-bg: #1e293b;
+            --btn-border: #334155;
+            --btn-text: #f8fafc;
+        }
+
+        body.light-mode {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --text-main: #0f172a;
+            --text-desc: #64748b;
+            --feature-text: #334155;
+            --btn-bg: #e2e8f0;
+            --btn-border: #cbd5e1;
+            --btn-text: #0f172a;
+        }
+
+        body { 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            min-height: 100vh;
+            padding: 16px;
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .top-controls {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .control-btn {
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border: 1px solid var(--btn-border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            border-radius: 24px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .app-icon {
+            width: 96px;
+            height: 96px;
+            border-radius: 22px;
+            object-fit: contain;
+            margin-bottom: 20px;
+            background: var(--border-color);
+            border: 2px solid var(--btn-border);
+        }
+
+        h1 {
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        p.desc {
+            color: var(--text-desc);
+            font-size: 15px;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .features {
+            text-align: left;
+            width: 100%;
+            margin-bottom: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .feature-item {
+            font-size: 15px;
+            color: var(--feature-text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 14px 24px;
+            border-radius: 14px;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .download-btn:active {
+            transform: scale(0.98);
+        }
+
+        .footer-text {
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-desc);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- साउंड इफ़ेक्ट के लिए ऑडियो एलिमेंट -->
+    <audio id="installSound" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/smart%20save%20login%20.mp3"></audio>
+
+    <div class="top-controls">
+        <button class="control-btn" id="langBtn" onclick="toggleLanguage()">🌐 हिंदी</button>
+        <button class="control-btn" id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
+    </div>
+
+    <div class="card">
+        <img src="./icon-512.png" alt="Smart Save Icon" class="app-icon">
+        
+        <h1 id="appTitle">Smart Save</h1>
+        <p class="desc" id="appDesc">Track your savings, manage your wallet and grow your money smarter.</p>
+        
+        <div class="features">
+            <div class="feature-item" id="feat1">📊 Savings Analytics</div>
+            <div class="feature-item" id="feat2">🔒 Secure & Fast</div>
+        </div>
+
+        <!-- क्लिक करते ही साउंड बजेगा और डाउनलोड शुरू होगा -->
+        <a href="#" class="download-btn" id="installBtn" onclick="handleDownload(event)">
+            📱 Install Smart Save
+        </a>
+
+        <div class="footer-text" id="footerText">Powered by Smart Save</div>
+    </div>
+
+    <script>
+        let currentTheme = 'dark';
+        let currentLang = 'en';
+
+        const texts = {
+            en: {
+                langBtnText: "🌐 हिंदी",
+                desc: "Track your savings, manage your wallet and grow your money smarter.",
+                feat1: "📊 Savings Analytics",
+                feat2: "🔒 Secure & Fast",
+                install: "📱 Install Smart Save",
+                footer: "Powered by Smart Save"
+            },
+            hi: {
+                langBtnText: "🌐 English",
+                desc: "अपनी बचत को ट्रैक करें, अपने वॉलेट को प्रबंधित करें और अपने पैसे को समझदारी से बढ़ाएं।",
+                feat1: "📊 बचत एनालिटिक्स",
+                feat2: "🔒 सुरक्षित और तेज़",
+                install: "📱 स्मार्ट सेव इंस्टॉल करें",
+                footer: "Powered by Smart Save"
+            }
+        };
+
+        function handleDownload(event) {
+            event.preventDefault(); // तुरंत पेज बदलने या लिंक खुलने से रोकने के लिए
+            const sound = document.getElementById('installSound');
+            const apkUrl = "https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/Smart%20save.apk";
+
+            // साउंड प्ले करें
+            sound.play().catch(e => console.log("Audio play blocked:", e));
+
+            // थोड़ा डिले देकर डाउनलोड शुरू करें ताकि साउंड अच्छे से सुनाई दे सके
+            setTimeout(() => {
+                window.location.href = apkUrl;
+            }, 600); // 0.6 सेकंड का डिले
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const body = document.body;
+            const themeBtn = document.getElementById('themeBtn');
+            const metaTheme = document.querySelector('meta[name="theme-color"]');
+
+            if (currentTheme === 'light') {
+                body.classList.add('light-mode');
+                themeBtn.innerHTML = "☀️ Light";
+                metaTheme.setAttribute('content', '#f1f5f9');
+            } else {
+                body.classList.remove('light-mode');
+                themeBtn.innerHTML = "🌙 Dark";
+                metaTheme.setAttribute('content', '#070d1b');
+            }
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'en' ? 'hi' : 'en';
+            const t = texts[currentLang];
+
+            document.getElementById('langBtn').innerHTML = t.langBtnText;
+            document.getElementById('appDesc').innerText = t.desc;
+            document.getElementById('feat1').innerText = t.feat1;
+            document.getElementById('feat2').innerText = t.feat2;
+            document.getElementById('installBtn').innerText = t.install;
+            document.getElementById('footerText').innerText = t.footer;
+        }
+    </script>
+</body>
+</html>
 
