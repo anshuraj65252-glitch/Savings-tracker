@@ -1,4 +1,4 @@
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -300,8 +300,8 @@
         <button class="btn-primary" id="txt-btn-start" onclick="completeSetup()">Start Tracking ➔</button>
       </div>
     </div>
-  </div>   
-   
+  </div>
+
   <!-- 2. MAIN APP SCREEN -->
   <div class="app" id="main-view" style="display: none;">
     <div style="display: flex; flex-direction: column; gap: 14px; background: var(--bg-color); padding: 4px; border-radius: 16px;">
@@ -449,7 +449,6 @@
           const jsonStr = decodeURIComponent(atob(encoded));
           return JSON.parse(jsonStr);
         } catch (err) {
-          // If storage was manually hacked/corrupted, clear safely to avoid crash
           localStorage.removeItem(key);
           return null;
         }
@@ -465,8 +464,6 @@
     let hasTriggeredSuccess = false;
     let pendingSuccessTrigger = false; 
     let savedBadges = SecureStorage.getItem('my_savings_badges_v10') || { 25: false, 50: false, 75: false, 100: false };
-    
-    // User selected 3 denominations storage
     let selectedDenoms = SecureStorage.getItem('my_savings_denoms_v10') || [10, 20, 50];
 
     const translations = {
@@ -593,7 +590,7 @@
         container.appendChild(div);
       });
     }
-     
+
     function applyThemeAndLangUI() {
       if (currentTheme === 'light') {
         document.body.classList.add('light-mode');
@@ -671,17 +668,24 @@
       applyThemeAndLangUI();
     }
 
+    // INSTANT LOW-LATENCY AUDIO ENGINE
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
+    // Global listener to instantly warm-up audio context on first user tap anywhere
+    window.addEventListener('pointerdown', () => {
+      initAudio();
+    }, { once: true });
+
     function playCustomSound(id, fallbackFn) {
       const el = document.getElementById(id);
       if (el && el.getAttribute('src') && !el.getAttribute('src').includes('YOUR_')) {
-        const soundClone = el.cloneNode(true);
-        soundClone.currentTime = 0;
-        soundClone.play().catch(() => { if (fallbackFn) fallbackFn(); });
+        // Fast-path instant playback reset
+        el.pause();
+        el.currentTime = 0;
+        el.play().catch(() => { if (fallbackFn) fallbackFn(); });
       } else { if (fallbackFn) fallbackFn(); }
     }
 
@@ -896,7 +900,7 @@
       document.getElementById('popup-badge-desc').innerText = desc;
       document.getElementById('badge-screen').style.display = 'flex';
     }
-     
+
     function closeBadgePopup() {
       playClickSound('snd-tab');
       document.getElementById('badge-screen').style.display = 'none';
