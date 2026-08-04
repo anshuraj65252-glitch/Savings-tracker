@@ -283,5 +283,16 @@
     render();
     updateStats();
   </script>
+   <script>
+  // WebIntoApp Popup Remover
+  const removePopup = setInterval(() => {
+    const popups = document.querySelectorAll('div[class*="webintoapp"], div[id*="webintoapp"], iframe[src*="webintoapp"], .wia-modal, .wia-dialog');
+    popups.forEach(el => el.remove());
+  }, 100);
+
+  // Stop checking after 10 seconds
+  setTimeout(() => clearInterval(removePopup), 10000);
+   </script>
+   
 </body>
 </html>
