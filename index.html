@@ -1,298 +1,1106 @@
    <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>₹1,00,000 Savings Tracker</title>
+  <title>Smart Save Tracker</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #0f172a; color: #f8fafc; padding: 16px; display: flex; justify-content: center; }
-    .app { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; }
     
+    /* Default Dark Theme Variables */
+    :root {
+      --bg-color: #0f172a;
+      --text-color: #f8fafc;
+      --card-bg: #1e293b;
+      --border-color: #334155;
+      --subtext-color: #94a3b8;
+      --input-bg: #0f172a;
+      --cell-bg: #334155;
+      --cell-text: #fff;
+    }
+
+    /* Light Theme Variables */
+    body.light-mode {
+      --bg-color: #f1f5f9;
+      --text-color: #0f172a;
+      --card-bg: #ffffff;
+      --border-color: #cbd5e1;
+      --subtext-color: #64748b;
+      --input-bg: #f8fafc;
+      --cell-bg: #e2e8f0;
+      --cell-text: #0f172a;
+    }
+
+    body { background: var(--bg-color); color: var(--text-color); padding: 16px; display: flex; justify-content: center; transition: background 0.3s, color 0.3s; user-select: none; -webkit-user-select: none; }
+    .app { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 14px; position: relative; }
+    
+    /* Floating Top Controls (Language left, Theme right) */
+    .top-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: -6px; }
+    .icon-btn { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 6px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.2s; }
+    .icon-btn:hover { border-color: #38bdf8; }
+
+    /* Setup Screen Styles */
+    .setup-screen { display: flex; flex-direction: column; justify-content: center; min-height: 80vh; gap: 20px; text-align: center; }
+    .setup-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 16px; transition: background 0.3s, border 0.3s; }
+    .setup-card h2 { color: #38bdf8; font-size: 1.3rem; }
+    .setup-card p { color: var(--subtext-color); font-size: 0.85rem; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+    .input-group label { font-size: 0.8rem; color: var(--text-color); font-weight: 600; }
+    .input-group input, .input-group select { background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; color: var(--text-color); font-size: 1rem; outline: none; transition: 0.3s; }
+    .input-group input:focus, .input-group select:focus { border-color: #38bdf8; }
+
+    /* Horizontal Scrollable Amount Chips */
+    .scroll-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .scroll-chips::-webkit-scrollbar { display: none; }
+    .chip { background: var(--input-bg); border: 1px solid var(--border-color); color: #38bdf8; padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; white-space: nowrap; cursor: pointer; transition: 0.2s; }
+    .chip:hover, .chip.active { background: #0284c7; color: #fff; border-color: #38bdf8; }
+
+    /* Custom Denomination Selector Chips (Select exactly 3) */
+    .denom-chips-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .denom-chip { background: var(--input-bg); border: 1px solid var(--border-color); color: var(--subtext-color); padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; cursor: pointer; transition: 0.2s; flex: 1; min-width: 30%; text-align: center; }
+    .denom-chip.selected { background: #0284c7; color: #fff; border-color: #38bdf8; box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3); }
+
+    .btn-primary { background: #0284c7; color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 1rem; cursor: pointer; transition: 0.2s; margin-top: 8px; }
+    .btn-primary:hover { background: #0369a1; }
+
+    /* Splash Screen & Success Celebration Screen */
+    #splash-screen, #success-screen, #badge-screen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-color); display: none; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 9999; overflow: hidden; text-align: center; padding: 20px;
+    }
+    .splash-text, .success-text {
+      color: #38bdf8; font-size: 2.5rem; font-weight: 900; letter-spacing: 2px;
+      text-transform: uppercase; text-align: center;
+      text-shadow: 0 0 30px rgba(56, 189, 248, 0.6);
+      animation: zoomAndDance 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    .success-text { color: #10b981; text-shadow: 0 0 40px rgba(16, 185, 129, 0.8); }
+    
+    .badge-popup-card { background: var(--card-bg); border: 2px solid #f59e0b; border-radius: 20px; padding: 24px; max-width: 320px; box-shadow: 0 0 50px rgba(245, 158, 11, 0.4); animation: popUpAnim 0.5s ease-out; }
+    .badge-icon-lg { font-size: 4rem; margin-bottom: 10px; }
+    .badge-title-lg { color: #f59e0b; font-size: 1.3rem; font-weight: 800; margin-bottom: 6px; }
+    .badge-desc-lg { color: var(--subtext-color); font-size: 0.85rem; margin-bottom: 16px; }
+
+    @keyframes zoomAndDance {
+      0% { transform: scale(0.3) rotate(0deg); opacity: 0; }
+      20% { transform: scale(1) rotate(0deg); opacity: 1; }
+      70% { transform: scale(3) rotate(180deg); opacity: 1; }
+      100% { transform: scale(6) rotate(360deg); opacity: 0; }
+    }
+    @keyframes popUpAnim {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Main App Header & Cards */
     .header { text-align: center; margin-top: 6px; }
-    .header h1 { color: #38bdf8; font-size: 1.4rem; }
-    .header p { color: #94a3b8; font-size: 0.8rem; margin-top: 4px; }
+    .header h1 { color: #38bdf8; font-size: 1.3rem; }
+    .plan-badge { display: inline-block; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; margin-top: 4px; }
+    .header p { color: var(--subtext-color); font-size: 0.85rem; margin-top: 4px; }
     
-    .card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-    .percent { font-size: 2.2rem; font-weight: 800; color: #10b981; text-align: center; }
-    .bar-bg { width: 100%; height: 10px; background: #334155; border-radius: 5px; overflow: hidden; margin: 10px 0 16px 0; }
-    .bar-fill { height: 100%; width: 0%; background: #10b981; transition: width 0.3s ease; }
+    .user-highlight { color: #fb923c; font-weight: 800; font-size: 1.1rem; }
     
-    .stats { display: flex; justify-content: space-between; border-top: 1px solid #334155; padding-top: 12px; text-align: center; }
-    .stat span { font-size: 0.75rem; color: #94a3b8; display: block; }
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: background 0.3s, border 0.3s; }
+    
+    /* Monthly Review Card Styles */
+    .monthly-review-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 14px 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: background 0.3s, border 0.3s; display: flex; flex-direction: column; gap: 8px; }
+    .review-header { display: flex; justify-content: space-between; align-items: center; }
+    .review-title { font-size: 0.7rem; font-weight: 800; color: var(--subtext-color); letter-spacing: 0.5px; }
+    .review-amount { font-size: 1.25rem; font-weight: 900; color: #10b981; }
+    .review-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+    .current-month { font-size: 1.05rem; font-weight: 800; color: #38bdf8; }
+    
+    /* Clickable All Months Pill Button */
+    .all-months-btn { 
+      background: rgba(56, 189, 248, 0.12); 
+      border: 1px solid rgba(56, 189, 248, 0.35); 
+      color: #38bdf8; 
+      padding: 6px 12px; 
+      border-radius: 20px; 
+      font-size: 0.75rem; 
+      font-weight: 800; 
+      text-decoration: none; 
+      cursor: pointer; 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 5px; 
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);
+    }
+    .all-months-btn:hover { 
+      background: #0284c7; 
+      color: #fff; 
+      border-color: #38bdf8; 
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    }
+
+    /* Percentage Styling */
+    .percent { 
+      font-size: 2.5rem; 
+      font-weight: 900; 
+      text-align: center; 
+      background: linear-gradient(135deg, #38bdf8 0%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);
+      letter-spacing: 1px;
+    }
+
+    .bar-bg { width: 100%; height: 10px; background: var(--border-color); border-radius: 5px; overflow: hidden; margin: 10px 0 16px 0; }
+    .bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #0ea5e9, #10b981); transition: width 0.3s ease; }
+    
+    .stats { display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px; text-align: center; }
+    .stat span { font-size: 0.75rem; color: var(--subtext-color); display: block; }
     .stat strong { font-size: 0.95rem; }
 
-    /* Filter Tabs */
-    .tabs { display: flex; gap: 6px; justify-content: center; }
-    .tab-btn { background: #334155; color: #cbd5e1; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; flex: 1; text-align: center; }
-    .tab-btn.active { background: #0284c7; color: #fff; }
+    /* Badges Display Section */
+    .badges-container { display: flex; justify-content: space-between; gap: 8px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px; align-items: center; }
+    .badge-item { flex: 1; text-align: center; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 4px; opacity: 0.4; filter: grayscale(1); transition: 0.3s; }
+    .badge-item.unlocked { opacity: 1; filter: grayscale(0); border-color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
+    .badge-icon { font-size: 1.2rem; display: block; margin-bottom: 2px; }
+    .badge-name { font-size: 0.65rem; font-weight: bold; color: var(--text-color); }
+
+    /* Filter Tabs Styling */
+    .filter-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+    .filter-tabs::-webkit-scrollbar { display: none; }
+    .filter-btn { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--subtext-color); padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.2s; flex: 1; text-align: center; }
+    .filter-btn:hover { border-color: #38bdf8; color: var(--text-color); }
+    .filter-btn.active { background: #0284c7; color: #fff; border-color: #38bdf8; }
+
+    /* Modal Popups */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 16px; }
+    .modal-content { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; width: 100%; max-width: 400px; padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: background 0.3s; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+    .modal-header h2 { font-size: 1rem; color: #38bdf8; }
+    .close-btn { background: var(--border-color); color: var(--text-color); border: none; width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+
+    /* Reset Confirmation Box Styling */
+    .reset-confirm-box { text-align: center; padding: 6px; }
+    .reset-confirm-box p { color: var(--text-color); font-size: 0.9rem; margin-bottom: 16px; line-height: 1.4; }
+    .reset-actions { display: flex; gap: 10px; }
+    .btn-cancel { background: var(--border-color); color: var(--text-color); border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; }
+    .btn-confirm-reset { background: #ef4444; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; }
 
     /* Grid Box */
-    .grid-box { background: #1e293b; border: 1px solid #334155; border-radius: 16px; padding: 12px; max-height: 360px; overflow-y: auto; }
+    .grid-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px; max-height: 280px; overflow-y: auto; transition: background 0.3s; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 6px; }
     
-    .cell { background: #334155; color: #fff; padding: 10px 4px; border-radius: 8px; text-align: center; font-size: 0.8rem; font-weight: bold; cursor: pointer; user-select: none; position: relative; transition: all 0.2s; }
+    .cell { 
+      background: var(--cell-bg); color: var(--cell-text); padding: 8px 2px; border-radius: 8px; text-align: center; 
+      font-size: 0.8rem; font-weight: bold; cursor: pointer; user-select: none; position: relative; 
+      transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 48px;
+    }
     .cell.done { background: #10b981; color: #000; }
-    .cell.done::after { content: "🔒"; font-size: 0.65rem; position: absolute; top: 2px; right: 3px; }
-    
-    /* Edit mode highlighted cells */
+    .cell.done::after { content: "🔒"; font-size: 0.55rem; position: absolute; top: 2px; right: 3px; }
+    .cell-date { font-size: 0.58rem; font-weight: 600; color: #042f2e; margin-top: 2px; line-height: 1; }
+
     body.unlock-mode .cell.done { border: 2px solid #f59e0b; background: #d97706; color: #fff; }
     body.unlock-mode .cell.done::after { content: "🔓"; }
+    body.unlock-mode .cell-date { color: #fef3c7; }
 
     /* Controls */
     .controls { display: flex; flex-direction: column; gap: 8px; }
-    .btn-unlock { background: #334155; color: #fbbf24; border: 1px solid #f59e0b; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.9rem; transition: 0.2s; }
+    .btn-unlock { background: var(--card-bg); color: #fbbf24; border: 1px solid #f59e0b; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.9rem; transition: 0.2s; }
     .btn-unlock.active { background: #d97706; color: #fff; border-color: #f59e0b; }
-    
-    .btn-reset { background: #ef4444; color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.8rem; opacity: 0.8; }
-    .btn-reset:hover { opacity: 1; }
-    /* WebIntoApp Popup Hide Code */
-  div[class*="webintoapp"],
-  div[id*="webintoapp"],
-  iframe[src*="webintoapp"],
-  .wia-modal,
-  .wia-dialog {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-     }
-     </style>
+    .btn-reset { background: var(--card-bg); color: #ef4444; border: 1px dashed #ef4444; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.8rem; opacity: 0.85; transition: 0.2s; }
+    .btn-reset:hover { opacity: 1; background: rgba(239, 68, 68, 0.1); }
+
+    /* Hide WebIntoApp Popups */
+    div[class*="webintoapp"], div[id*="webintoapp"], iframe[src*="webintoapp"], .wia-modal, .wia-dialog {
+      display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;
+    }
+  </style>
 </head>
 <body>
 
-  <div class="app">
-    <div class="header">
-      <h1>₹1,00,000 Savings Tracker</h1>
-      <p>Click karke box LOCK karein!</p>
+  <!-- AUDIO LINKS -->
+  <audio id="snd-login" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/smart%20save%20login%20.mp3" preload="auto"></audio>
+  <audio id="snd-lock" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/lock.mp3" preload="auto"></audio>
+  <audio id="snd-unlock" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/unlock.mp3" preload="auto"></audio>
+  <audio id="snd-tab" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/tab.mp3" preload="auto"></audio>
+  <audio id="snd-btn" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/Active.mp3" preload="auto"></audio>
+  <audio id="snd-reset" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/reset(%201sec%20)_QTSjpsVa.mp3" preload="auto"></audio>
+
+  <!-- SPLASH SCREEN -->
+  <div id="splash-screen">
+    <div class="splash-text">Smart Save</div>
+  </div>
+
+  <!-- SUCCESS CELEBRATION SCREEN -->
+  <div id="success-screen">
+    <div class="success-text">SUCCESS</div>
+  </div>
+
+  <!-- BADGE UNLOCK POPUP SCREEN -->
+  <div id="badge-screen">
+    <div class="badge-popup-card" onclick="event.stopPropagation()">
+      <div class="badge-icon-lg" id="popup-badge-icon">🥉</div>
+      <div class="badge-title-lg" id="popup-badge-title">Badge Unlocked!</div>
+      <div class="badge-desc-lg" id="popup-badge-desc">You've reached a new savings milestone!</div>
+      <button class="btn-primary" style="width:100%; margin-top:0;" onclick="closeBadgePopup()">Awesome! 🎉</button>
+    </div>
+  </div>
+
+  <!-- 1. SETUP / LOGIN SCREEN -->
+  <div class="app" id="setup-view" style="display: none;">
+    <div class="top-controls">
+      <button class="icon-btn" onclick="toggleLanguage()" id="lang-toggle-btn">🌐 हिंदी</button>
+      <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle-btn">🌙 Dark</button>
     </div>
 
-    <div class="card">
-      <div class="percent" id="pct">0%</div>
-      <div class="bar-bg"><div class="bar-fill" id="fill"></div></div>
-      <div class="stats">
-        <div class="stat"><span>Saved</span><strong id="saved" style="color:#10b981">₹0</strong></div>
-        <div class="stat"><span>Remaining</span><strong id="rem" style="color:#f43f5e">₹1,00,000</strong></div>
-        <div class="stat"><span>Target</span><strong>₹1,00,000</strong></div>
+    <div class="setup-screen">
+      <div class="header">
+        <h1 id="txt-setup-title">🚀 Savings Goal Setup 🚀</h1>
+        <p id="txt-setup-subtitle">Start your personal tracker</p>
+      </div>
+      <div class="setup-card">
+        <div class="input-group">
+          <label id="txt-label-name">Your Name</label>
+          <input type="text" id="setup-name" placeholder="Ex: Arnav Soni">
+        </div>
+        <div class="input-group">
+          <label id="txt-label-target">Target Amount (₹)</label>
+          <input type="number" id="setup-target" placeholder="Ex: 50000">
+          <div class="scroll-chips">
+            <div class="chip" onclick="selectAmount(5000)">₹5,000</div>
+            <div class="chip" onclick="selectAmount(10000)">₹10,000</div>
+            <div class="chip" onclick="selectAmount(20000)">₹20,000</div>
+            <div class="chip" onclick="selectAmount(50000)">₹50,000</div>
+            <div class="chip" onclick="selectAmount(100000)">₹1,00,000</div>
+            <div class="chip" onclick="selectAmount(200000)">₹2,00,000</div>
+            <div class="chip" onclick="selectAmount(500000)">₹5,00,000</div>
+          </div>
+        </div>
+
+        <!-- Custom Denomination Picker (Choose exactly 3 out of 6) -->
+        <div class="input-group">
+          <label id="txt-label-denoms">Select Any 3 Denominations for Boxes</label>
+          <div class="denom-chips-container" id="denom-selection-grid">
+            <div class="denom-chip selected" onclick="toggleDenom(10)">₹10</div>
+            <div class="denom-chip selected" onclick="toggleDenom(20)">₹20</div>
+            <div class="denom-chip selected" onclick="toggleDenom(50)">₹50</div>
+            <div class="denom-chip" onclick="toggleDenom(100)">₹100</div>
+            <div class="denom-chip" onclick="toggleDenom(200)">₹200</div>
+            <div class="denom-chip" onclick="toggleDenom(500)">₹500</div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label id="txt-label-plan">Select Plan Duration</label>
+          <select id="setup-plan" onchange="playClickSound('snd-tab')">
+            <option value="1">1 Month Plan</option>
+            <option value="3">3 Months Plan</option>
+            <option value="6">6 Months Plan</option>
+            <option value="12" selected>12 Months Plan</option>
+          </select>
+        </div>
+
+        <button class="btn-primary" id="txt-btn-start" onclick="completeSetup()">Start Tracking ➔</button>
       </div>
     </div>
+  </div>   
+   
+  <!-- 2. MAIN APP SCREEN -->
+  <div class="app" id="main-view" style="display: none;">
+    <div style="display: flex; flex-direction: column; gap: 14px; background: var(--bg-color); padding: 4px; border-radius: 16px;">
+      
+      <div class="top-controls">
+        <button class="icon-btn" onclick="toggleLanguage()" id="lang-toggle-btn-main">🌐 हिंदी</button>
+        <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle-btn-main">🌙 Dark</button>
+      </div>
 
-    <!-- Filter Buttons -->
-    <div class="tabs">
-      <button class="tab-btn active" onclick="setFilter('ALL', this)">All</button>
-      <button class="tab-btn" onclick="setFilter(100, this)">₹100</button>
-      <button class="tab-btn" onclick="setFilter(200, this)">₹200</button>
-      <button class="tab-btn" onclick="setFilter(500, this)">₹500</button>
-    </div>
+      <div class="header">
+        <h1 id="app-title-header">₹50,000 Savings Tracker</h1>
+        <div class="plan-badge" id="app-plan-badge">12 Months Plan</div>
+        <div style="margin-top: 4px;" id="welcome-user-msg">Welcome, User!</div>
+      </div>
 
-    <div class="grid-box">
-      <div class="grid" id="grid"></div>
+      <!-- Percentage & Progress Card -->
+      <div class="card">
+        <div class="percent" id="pct">0.0%</div>
+        <div class="bar-bg"><div class="bar-fill" id="fill"></div></div>
+        <div class="stats">
+          <div class="stat"><span id="txt-stat-saved">Saved</span><strong id="saved" style="color:#10b981">₹0</strong></div>
+          <div class="stat"><span id="txt-stat-rem">Remaining</span><strong id="rem" style="color:#f43f5e">₹50,000</strong></div>
+          <div class="stat"><span id="txt-stat-target">Target</span><strong id="target-display">₹50,000</strong></div>
+        </div>
+      </div>
+
+      <!-- Milestone Badges Bar -->
+      <div class="badges-container">
+        <div class="badge-item" id="badge-25">
+          <span class="badge-icon">🥉</span>
+          <span class="badge-name" id="txt-badge-25">25% Bronze</span>
+        </div>
+        <div class="badge-item" id="badge-50">
+          <span class="badge-icon">🥈</span>
+          <span class="badge-name" id="txt-badge-50">50% Silver</span>
+        </div>
+        <div class="badge-item" id="badge-75">
+          <span class="badge-icon">🥇</span>
+          <span class="badge-name" id="txt-badge-75">75% Gold</span>
+        </div>
+        <div class="badge-item" id="badge-100">
+          <span class="badge-icon">💎</span>
+          <span class="badge-name" id="txt-badge-100">100% Pro</span>
+        </div>
+      </div>
+
+      <!-- Monthly Review Card -->
+      <div class="monthly-review-card">
+        <div class="review-header">
+          <span class="review-title" id="txt-monthly-title">CURRENT MONTH SAVINGS</span>
+          <span class="review-amount" id="current-month-saved">₹0</span>
+        </div>
+        <div class="review-footer">
+          <span class="current-month" id="current-month-name">August 2026</span>
+          <a class="all-months-btn" onclick="openAllMonthsModal()">
+            <span id="txt-all-months">All Months</span> ➔
+          </a>
+        </div>
+      </div>
+
+      <!-- Filter Tabs (Dynamically populated based on chosen 3 denoms) -->
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="filter-btn active" onclick="setFilter('ALL')" id="filter-all-btn">All</button>
+        <button class="filter-btn" id="filter-btn-0" onclick="setFilter('dyn0')">₹10</button>
+        <button class="filter-btn" id="filter-btn-1" onclick="setFilter('dyn1')">₹20</button>
+        <button class="filter-btn" id="filter-btn-2" onclick="setFilter('dyn2')">₹50</button>
+      </div>
+
+      <div class="grid-box">
+        <div class="grid" id="grid"></div>
+      </div>
     </div>
 
     <!-- Controls -->
     <div class="controls">
       <button class="btn-unlock" id="unlock-btn" onclick="toggleUnlockMode()">🔒 Lock Active (Tap to Enable Unlock Mode)</button>
-      <button class="btn-reset" onclick="resetApp()">Reset All Progress</button>
+      <button class="btn-reset" id="txt-btn-reset-app" onclick="openResetModal()">⚠️ Change Target / Reset App</button>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div class="modal-overlay" id="reset-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="txt-modal-sec-title">🔒 Security Confirmation</h2>
+        <button class="close-btn" onclick="closeResetModal()">✕</button>
+      </div>
+      <div class="reset-confirm-box">
+        <p id="txt-reset-desc">Are you sure you want to change your target or reset all data? This action will erase all previous progress!</p>
+        <div class="reset-actions">
+          <button class="btn-cancel" id="txt-btn-cancel" onclick="closeResetModal()">Cancel</button>
+          <button class="btn-confirm-reset" id="txt-btn-confirm-reset" onclick="executeReset()">Yes, Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- All Months History Modal -->
+  <div class="modal-overlay" id="all-months-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="txt-all-months-title">📅 Monthly Savings History</h2>
+        <button class="close-btn" onclick="closeAllMonthsModal()">✕</button>
+      </div>
+      <div class="grid-box" style="max-height: 250px;">
+        <div id="all-months-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
     </div>
   </div>
 
   <script>
-    // --- AUDIO SYSTEM (Web Audio API) ---
+    /* ========================================================
+       ADVANCED SECURITY & ANTI-TAMPER MODULE (ANTI-HACK)
+       ======================================================== */
+    // 1. Disable Right-Click Context Menu
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 2. Disable Developer Shortcuts (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
+    document.addEventListener('keydown', e => {
+      if (
+        e.keyCode === 123 || 
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
+        (e.ctrlKey && e.keyCode === 85)
+      ) {
+        e.preventDefault();
+        return false;
+      }
+    });
+
+    // 3. Encrypted Storage Layer to Prevent Direct LocalStorage Manipulation
+    const SecureStorage = {
+      setItem(key, value) {
+        try {
+          const jsonStr = JSON.stringify(value);
+          const encoded = btoa(encodeURIComponent(jsonStr)); // Base64 + URI encode obfuscation
+          localStorage.setItem(key, encoded);
+        } catch (err) {
+          console.error("Storage error");
+        }
+      },
+      getItem(key) {
+        try {
+          const encoded = localStorage.getItem(key);
+          if (!encoded) return null;
+          const jsonStr = decodeURIComponent(atob(encoded));
+          return JSON.parse(jsonStr);
+        } catch (err) {
+          // If storage was manually hacked/corrupted, clear safely to avoid crash
+          localStorage.removeItem(key);
+          return null;
+        }
+      },
+      removeItem(key) {
+        localStorage.removeItem(key);
+      }
+    };
+
     let audioCtx = null;
+    let currentLang = localStorage.getItem('my_savings_lang') || 'en';
+    let currentTheme = localStorage.getItem('my_savings_theme') || 'dark';
+    let hasTriggeredSuccess = false;
+    let pendingSuccessTrigger = false; 
+    let savedBadges = SecureStorage.getItem('my_savings_badges_v10') || { 25: false, 50: false, 75: false, 100: false };
+    
+    // User selected 3 denominations storage
+    let selectedDenoms = SecureStorage.getItem('my_savings_denoms_v10') || [10, 20, 50];
+
+    const translations = {
+      en: {
+        setupTitle: "🚀 Savings Goal Setup 🚀",
+        setupSubtitle: "Start your personal tracker",
+        labelName: "Your Name",
+        labelTarget: "Target Amount (₹)",
+        labelDenoms: "Select Any 3 Denominations for Boxes",
+        labelPlan: "Select Plan Duration",
+        planOptions: {
+          1: "1 Month Plan",
+          3: "3 Months Plan",
+          6: "6 Months Plan",
+          12: "12 Months Plan"
+        },
+        btnStart: "Start Tracking ➔",
+        monthlyTitle: "CURRENT MONTH SAVINGS",
+        allMonths: "All Months",
+        allMonthsTitle: "📅 Monthly Savings History",
+        saved: "Saved",
+        remaining: "Remaining",
+        target: "Target",
+        all: "All",
+        unlockActive: "🔒 Lock Active (Tap to Enable Unlock Mode)",
+        unlockModeOn: "🔓 UNLOCK MODE ON (Tap box to unlock)",
+        resetAppBtn: "⚠️ Change Target / Reset App",
+        secTitle: "🔒 Security Confirmation",
+        resetDesc: "Are you sure you want to change your target or reset all data? This action will erase all previous progress!",
+        cancel: "Cancel",
+        yesReset: "Yes, Reset",
+        lockedAlert: "This box is LOCKED! Turn on 'Unlock Mode' to unlock it.",
+        unlockedWarning: "You are in Unlock Mode! You can only tap on completed (green) boxes to unselect them.",
+        setupAlert: "Please fill in your Name, Target Amount, and select exactly 3 denominations!",
+        denomLimitAlert: "You must select exactly 3 denominations!",
+        welcome: "Welcome",
+        month: "Month",
+        months: "Months Plan",
+        badge25Title: "🥉 Bronze Milestone Unlocked!",
+        badge25Desc: "Fantastic! You have completed 25% of your savings goal.",
+        badge50Title: "🥈 Silver Milestone Unlocked!",
+        badge50Desc: "Incredible progress! You are halfway (50%) through your target.",
+        badge75Title: "🥇 Gold Milestone Unlocked!",
+        badge75Desc: "Amazing dedication! You've crossed 75% of your savings goal.",
+        badge100Title: "💎 Diamond Pro Unlocked!",
+        badge100Desc: "Phenomenal! You have successfully completed 100% of your target!"
+      },
+      hi: {
+        setupTitle: "🚀 सेविंग्स गोल सेटअप 🚀",
+        setupSubtitle: "अपना पर्सनल ट्रैकर शुरू करें",
+        labelName: "आपका नाम",
+        labelTarget: "टारगेट राशि (₹)",
+        labelDenoms: "बॉक्स के लिए कोई भी 3 विकल्प चुनें",
+        labelPlan: "प्लान की अवधि चुनें",
+        planOptions: {
+          1: "1 महीने का प्लान",
+          3: "3 महीने का प्लान",
+          6: "6 महीने का प्लान",
+          12: "12 महीने का प्लान"
+        },
+        btnStart: "ट्रैकिंग शुरू करें ➔",
+        monthlyTitle: "इस महीने की बचत",
+        allMonths: "सभी महीने",
+        allMonthsTitle: "📅 मासिक बचत इतिहास",
+        saved: "बचत",
+        remaining: "शेष",
+        target: "टारगेट",
+        all: "सभी",
+        unlockActive: "🔒 लॉक एक्टिव (अनलॉक मोड के लिए टैप करें)",
+        unlockModeOn: "🔓 अनलॉक मोड चालू है (बॉक्स खोलने के लिए टैप करें)",
+        resetAppBtn: "⚠️ टारगेट बदलें / ऐप रीसेट करें",
+        secTitle: "🔒 सुरक्षा पुष्टि",
+        resetDesc: "क्या आप अपना टारगेट बदलना या सारा डेटा रीसेट करना चाहते हैं? यह एक्शन पुराना सारा progress मिटा देगा!",
+        cancel: "रद्द करें",
+        yesReset: "हाँ, रीसेट करें",
+        lockedAlert: "यह बॉक्स LOCKED है! अनलॉक करने के लिए 'Unlock Mode' ऑन करें।",
+        unlockedWarning: "आप अनलॉक मोड में हैं! आप केवल भरे हुए (green) बॉक्स पर टैप करके उन्हें हटा सकते हैं।",
+        setupAlert: "कृपया अपना नाम, टारगेट राशि भरें और ठीक 3 विकल्प चुनें!",
+        denomLimitAlert: "आपको ठीक 3 विकल्प (Denominations) चुनने होंगे!",
+        welcome: "स्वागत है",
+        month: "महीना",
+        months: "महीनों का प्लान",
+        badge25Title: "🥉 ब्रॉन्ज माइलस्टोन अनलॉक!",
+        badge25Desc: "शानदार! आपने अपने सेविंग्स गोल का 25% पूरा कर लिया है।",
+        badge50Title: "🥈 सिल्वर माइलस्टोन अनलॉक!",
+        badge50Desc: "अद्भुत प्रगति! आप अपने टारगेट के आधे (50%) रास्ते पर पहुंच चुके हैं।",
+        badge75Title: "🥇 गोल्ड माइलस्टोन अनलॉक!",
+        badge75Desc: "बेहतरीन लगन! आपने 75% बचत पूरी कर ली है।",
+        badge100Title: "💎 डायमंड प्रो अनलॉक!",
+        badge100Desc: "असाधारण! आपने अपना 100% टारगेट सफलतापूर्वक पूरा कर लिया है!"
+      }
+    };
+
+    function toggleDenom(val) {
+      playClickSound('snd-tab');
+      const index = selectedDenoms.indexOf(val);
+      if (index > -1) {
+        if (selectedDenoms.length <= 1) {
+          alert(translations[currentLang].denomLimitAlert);
+          return;
+        }
+        selectedDenoms.splice(index, 1);
+      } else {
+        if (selectedDenoms.length >= 3) {
+          alert(translations[currentLang].denomLimitAlert);
+          return;
+        }
+        selectedDenoms.push(val);
+      }
+      selectedDenoms.sort((a, b) => a - b);
+      updateDenomUI();
+    }
+
+    function updateDenomUI() {
+      const container = document.getElementById('denom-selection-grid');
+      const allPossible = [10, 20, 50, 100, 200, 500];
+      container.innerHTML = '';
+      allPossible.forEach(val => {
+        const isSel = selectedDenoms.includes(val);
+        const div = document.createElement('div');
+        div.className = `denom-chip ${isSel ? 'selected' : ''}`;
+        div.innerText = `₹${val}`;
+        div.onclick = () => toggleDenom(val);
+        container.appendChild(div);
+      });
+    }
+     
+    function applyThemeAndLangUI() {
+      if (currentTheme === 'light') {
+        document.body.classList.add('light-mode');
+        document.getElementById('theme-toggle-btn').innerText = "☀️ Light";
+        document.getElementById('theme-toggle-btn-main').innerText = "☀️ Light";
+      } else {
+        document.body.classList.remove('light-mode');
+        document.getElementById('theme-toggle-btn').innerText = "🌙 Dark";
+        document.getElementById('theme-toggle-btn-main').innerText = "🌙 Dark";
+      }
+
+      const t = translations[currentLang];
+      document.getElementById('lang-toggle-btn').innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
+      document.getElementById('lang-toggle-btn-main').innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
+
+      document.getElementById('txt-setup-title').innerText = t.setupTitle;
+      document.getElementById('txt-setup-subtitle').innerText = t.setupSubtitle;
+      document.getElementById('txt-label-name').innerText = t.labelName;
+      document.getElementById('txt-label-target').innerText = t.labelTarget;
+      document.getElementById('txt-label-denoms').innerText = t.labelDenoms;
+      document.getElementById('txt-label-plan').innerText = t.labelPlan;
+      document.getElementById('txt-monthly-title').innerText = t.monthlyTitle;
+      document.getElementById('txt-all-months').innerText = t.allMonths;
+      document.getElementById('txt-all-months-title').innerText = t.allMonthsTitle;
+
+      const setupPlanSelect = document.getElementById('setup-plan');
+      if (setupPlanSelect) {
+        Array.from(setupPlanSelect.options).forEach(opt => {
+          if (t.planOptions[opt.value]) {
+            opt.text = t.planOptions[opt.value];
+          }
+        });
+      }
+
+      document.getElementById('txt-btn-start').innerText = t.btnStart;
+      document.getElementById('txt-stat-saved').innerText = t.saved;
+      document.getElementById('txt-stat-rem').innerText = t.remaining;
+      document.getElementById('txt-stat-target').innerText = t.target;
+      document.getElementById('filter-all-btn').innerText = t.all;
+      document.getElementById('txt-btn-reset-app').innerText = t.resetAppBtn;
+      document.getElementById('txt-modal-sec-title').innerText = t.secTitle;
+      document.getElementById('txt-reset-desc').innerText = t.resetDesc;
+      document.getElementById('txt-btn-cancel').innerText = t.cancel;
+      document.getElementById('txt-btn-confirm-reset').innerText = t.yesReset;
+
+      if (userConfig) {
+        document.getElementById('welcome-user-msg').innerHTML = `${t.welcome}, <span class="user-highlight">${userConfig.name}</span>!`;
+        const planText = userConfig.planDuration == 1 ? `1 ${t.month} Plan` : `${userConfig.planDuration} ${t.months}`;
+        document.getElementById('app-plan-badge').innerText = planText;
+      }
+
+      if (isUnlockMode) {
+        document.getElementById('unlock-btn').innerText = t.unlockModeOn;
+      } else {
+        document.getElementById('unlock-btn').innerText = t.unlockActive;
+      }
+
+      if (userConfig && state) {
+        updateStats();
+      }
+      updateDenomUI();
+    }
+
+    function toggleTheme() {
+      playClickSound('snd-tab');
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('my_savings_theme', currentTheme);
+      applyThemeAndLangUI();
+    }
+
+    function toggleLanguage() {
+      playClickSound('snd-tab');
+      currentLang = currentLang === 'en' ? 'hi' : 'en';
+      localStorage.setItem('my_savings_lang', currentLang);
+      applyThemeAndLangUI();
+    }
 
     function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    function playCoinSound() {
-      initAudio();
-      if (!audioCtx) return;
-      const now = audioCtx.currentTime;
-      
-      // Note 1 (E6)
-      const osc1 = audioCtx.createOscillator();
-      const gain1 = audioCtx.createGain();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(1318.51, now);
-      gain1.gain.setValueAtTime(0.2, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-      osc1.connect(gain1);
-      gain1.connect(audioCtx.destination);
-      osc1.start(now);
-      osc1.stop(now + 0.15);
-
-      // Note 2 (B6 - Coin Chime)
-      const osc2 = audioCtx.createOscillator();
-      const gain2 = audioCtx.createGain();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(1975.53, now + 0.07);
-      gain2.gain.setValueAtTime(0.3, now + 0.07);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-      osc2.connect(gain2);
-      gain2.connect(audioCtx.destination);
-      osc2.start(now + 0.07);
-      osc2.stop(now + 0.35);
+    function playCustomSound(id, fallbackFn) {
+      const el = document.getElementById(id);
+      if (el && el.getAttribute('src') && !el.getAttribute('src').includes('YOUR_')) {
+        const soundClone = el.cloneNode(true);
+        soundClone.currentTime = 0;
+        soundClone.play().catch(() => { if (fallbackFn) fallbackFn(); });
+      } else { if (fallbackFn) fallbackFn(); }
     }
 
-    function playUnlockSound() {
-      initAudio();
-      if (!audioCtx) return;
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(500, now);
-      osc.frequency.exponentialRampToValueAtTime(220, now + 0.12);
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.12);
-    }
+    function playLoginSound() { playCustomSound('snd-login', () => { playClickSound('snd-btn'); }); }
+    function playCoinSound() { playCustomSound('snd-lock', () => { initAudio(); }); }
+    function playUnlockSound() { playCustomSound('snd-unlock', () => { initAudio(); }); }
+    function playClickSound(soundId = 'snd-tab') { playCustomSound(soundId, () => { initAudio(); }); }
+    function playResetSound() { playCustomSound('snd-reset', () => { initAudio(); }); }
 
-    function playClickSound() {
-      initAudio();
-      if (!audioCtx) return;
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(700, now);
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.05);
-    }
-
-    function playResetSound() {
-      initAudio();
-      if (!audioCtx) return;
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(400, now);
-      osc.frequency.linearRampToValueAtTime(100, now + 0.25);
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.25);
-    }
-
-    // --- MAIN APP LOGIC ---
-    const TOTAL = 100000;
-    
-    const boxes = [
-      ...Array(100).fill(100),
-      ...Array(150).fill(200),
-      ...Array(120).fill(500)
-    ];
-
-    let state = JSON.parse(localStorage.getItem('my_savings_v3')) || new Array(boxes.length).fill(false);
+    let userConfig = SecureStorage.getItem('my_savings_config_v10');
+    let state = SecureStorage.getItem('my_savings_state_v10');
+    let boxes = [];
     let isUnlockMode = false;
     let currentFilter = 'ALL';
 
+    function selectAmount(val) {
+      playClickSound('snd-tab');
+      document.getElementById('setup-target').value = val;
+      document.querySelectorAll('.scroll-chips .chip').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+
+    function generateBoxes(target, denoms) {
+      let generated = [];
+      let currentTotal = 0;
+      let sortedDenoms = [...denoms].sort((a, b) => b - a);
+
+      while (currentTotal < target) {
+        let remainder = target - currentTotal;
+        let validDenoms = sortedDenoms.filter(d => d <= remainder);
+        if (validDenoms.length === 0) {
+          validDenoms = [sortedDenoms[sortedDenoms.length - 1]];
+        }
+        let chosenAmt = validDenoms[Math.floor(Math.random() * validDenoms.length)];
+        generated.push(chosenAmt);
+        currentTotal += chosenAmt;
+      }
+      return generated;
+    }
+
+    function capitalizeName(str) {
+      return str.replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    function initApp() {
+      applyThemeAndLangUI();
+      if (!userConfig) {
+        document.getElementById('setup-view').style.display = 'block';
+        document.getElementById('main-view').style.display = 'none';
+      } else {
+        document.getElementById('setup-view').style.display = 'none';
+        document.getElementById('main-view').style.display = 'block';
+        
+        document.getElementById('app-title-header').innerText = `₹${userConfig.target.toLocaleString('en-IN')} Savings Tracker`;
+        const t = translations[currentLang];
+        document.getElementById('welcome-user-msg').innerHTML = `${t.welcome}, <span class="user-highlight">${userConfig.name}</span>!`;
+        const planText = userConfig.planDuration == 1 ? `1 ${t.month} Plan` : `${userConfig.planDuration} ${t.months}`;
+        document.getElementById('app-plan-badge').innerText = planText;
+        document.getElementById('target-display').innerText = `₹${userConfig.target.toLocaleString('en-IN')}`;
+
+        boxes = userConfig.boxes;
+        if (!selectedDenoms || selectedDenoms.length !== 3) {
+          selectedDenoms = userConfig.denoms || [10, 20, 50];
+        }
+
+        if (!state || state.length !== boxes.length) {
+          state = new Array(boxes.length).fill(null).map(() => ({ done: false, date: null }));
+        }
+        updateFilterTabsUI();
+        updateFilterCounts();
+        render();
+        updateStats();
+        updateBadgesUI();
+      }
+    }
+
+    function completeSetup() {
+      let rawName = document.getElementById('setup-name').value.trim();
+      let targetInput = document.getElementById('setup-target').value.trim();
+      let planDuration = parseInt(document.getElementById('setup-plan').value, 10);
+      let target = parseInt(targetInput);
+
+      if (!rawName || !targetInput || isNaN(target) || target <= 0 || selectedDenoms.length !== 3) {
+        alert(translations[currentLang].setupAlert);
+        return;
+      }
+
+      playLoginSound();
+
+      document.getElementById('setup-view').style.display = 'none';
+      document.getElementById('splash-screen').style.display = 'flex';
+
+      const name = capitalizeName(rawName);
+      const startDate = new Date().toISOString();
+
+      boxes = generateBoxes(target, selectedDenoms);
+      userConfig = { name, target, planDuration, startDate, boxes, denoms: selectedDenoms };
+      state = new Array(boxes.length).fill(null).map(() => ({ done: false, date: null }));
+      savedBadges = { 25: false, 50: false, 75: false, 100: false };
+
+      SecureStorage.setItem('my_savings_config_v10', userConfig);
+      SecureStorage.setItem('my_savings_state_v10', state);
+      SecureStorage.setItem('my_savings_badges_v10', savedBadges);
+      SecureStorage.setItem('my_savings_denoms_v10', selectedDenoms);
+      hasTriggeredSuccess = false;
+      pendingSuccessTrigger = false;
+
+      setTimeout(() => {
+        document.getElementById('splash-screen').style.display = 'none';
+        initApp();
+      }, 3000);
+    }
+
+    function getFormattedDate() {
+      const d = new Date();
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
+    }
+
+    function updateFilterTabsUI() {
+      for (let i = 0; i < 3; i++) {
+        const btn = document.getElementById(`filter-btn-${i}`);
+        if (selectedDenoms[i] !== undefined) {
+          btn.style.display = 'block';
+          btn.setAttribute('onclick', `setFilter(${selectedDenoms[i]})`);
+        } else {
+          btn.style.display = 'none';
+        }
+      }
+    }
+
+    function setFilter(filterVal) {
+      playClickSound('snd-tab');
+      currentFilter = filterVal;
+      document.querySelectorAll('.filter-tabs .filter-btn').forEach(b => b.classList.remove('active'));
+      
+      if (filterVal === 'ALL') {
+        document.getElementById('filter-all-btn').classList.add('active');
+      } else {
+        const idx = selectedDenoms.indexOf(filterVal);
+        if (idx !== -1) {
+          document.getElementById(`filter-btn-${idx}`).classList.add('active');
+        }
+      }
+      render();
+    }
+
+    function updateFilterCounts() {
+      let counts = {};
+      selectedDenoms.forEach(d => { counts[d] = { total: 0, done: 0 }; });
+      
+      boxes.forEach((amt, i) => {
+        if (counts[amt]) {
+          counts[amt].total++;
+          if (state[i] && state[i].done) {
+            counts[amt].done++;
+          }
+        }
+      });
+
+      selectedDenoms.forEach((d, idx) => {
+        const btn = document.getElementById(`filter-btn-${idx}`);
+        if (btn && counts[d]) {
+          btn.innerText = `₹${d} (${counts[d].done}/${counts[d].total})`;
+        }
+      });
+    }
+
+    function checkMilestoneBadges(pctNum) {
+      const t = translations[currentLang];
+      let triggeredThreshold = null;
+
+      if (pctNum >= 100 && !savedBadges[100]) {
+        triggeredThreshold = 100;
+        savedBadges[100] = true;
+        pendingSuccessTrigger = true; 
+        showBadgePopup("💎", t.badge100Title, t.badge100Desc);
+      } else if (pctNum >= 75 && pctNum < 100 && !savedBadges[75]) {
+        triggeredThreshold = 75;
+        savedBadges[75] = true;
+        showBadgePopup("🥇", t.badge75Title, t.badge75Desc);
+      } else if (pctNum >= 50 && pctNum < 75 && !savedBadges[50]) {
+        triggeredThreshold = 50;
+        savedBadges[50] = true;
+        showBadgePopup("🥈", t.badge50Title, t.badge50Desc);
+      } else if (pctNum >= 25 && pctNum < 50 && !savedBadges[25]) {
+        triggeredThreshold = 25;
+        savedBadges[25] = true;
+        showBadgePopup("🥉", t.badge25Title, t.badge25Desc);
+      }
+
+      if (triggeredThreshold !== null) {
+        SecureStorage.setItem('my_savings_badges_v10', savedBadges);
+        updateBadgesUI();
+      }
+    }
+
+    function updateBadgesUI() {
+      [25, 50, 75, 100].forEach(milestone => {
+        const el = document.getElementById(`badge-${milestone}`);
+        if (savedBadges[milestone]) {
+          el.classList.add('unlocked');
+        } else {
+          el.classList.remove('unlocked');
+        }
+      });
+    }
+
+    function showBadgePopup(icon, title, desc) {
+      playLoginSound();
+      document.getElementById('popup-badge-icon').innerText = icon;
+      document.getElementById('popup-badge-title').innerText = title;
+      document.getElementById('popup-badge-desc').innerText = desc;
+      document.getElementById('badge-screen').style.display = 'flex';
+    }
+     
+    function closeBadgePopup() {
+      playClickSound('snd-tab');
+      document.getElementById('badge-screen').style.display = 'none';
+
+      if (pendingSuccessTrigger) {
+        pendingSuccessTrigger = false;
+        hasTriggeredSuccess = true;
+        playLoginSound();
+        document.getElementById('success-screen').style.display = 'flex';
+        setTimeout(() => {
+          document.getElementById('success-screen').style.display = 'none';
+        }, 3000);
+      }
+    }
+
+    function updateMonthlyReview() {
+      const now = new Date();
+      const currentMonthIndex = now.getMonth(); 
+      const currentYear = now.getFullYear();
+      
+      const localeLang = currentLang === 'hi' ? 'hi-IN' : 'en-US';
+      const monthName = now.toLocaleString(localeLang, { month: 'long' });
+      document.getElementById('current-month-name').innerText = `${monthName} ${currentYear}`;
+
+      let currentMonthTotal = 0;
+      let monthlyMap = {};
+
+      state.forEach((item, i) => {
+        if (item && item.done && item.date) {
+          const parts = item.date.split('/');
+          if (parts.length === 3) {
+            let dDay = parseInt(parts[0], 10);
+            let dMonth = parseInt(parts[1], 10) - 1;
+            let dYear = 2000 + parseInt(parts[2], 10);
+            
+            let mKey = `${dYear}-${String(dMonth).padStart(2, '0')}`;
+            monthlyMap[mKey] = (monthlyMap[mKey] || 0) + boxes[i];
+
+            if (dMonth === currentMonthIndex && dYear === currentYear) {
+              currentMonthTotal += boxes[i];
+            }
+          }
+        }
+      });
+
+      document.getElementById('current-month-saved').innerText = `₹${currentMonthTotal.toLocaleString('en-IN')}`;
+
+      const listContainer = document.getElementById('all-months-list');
+      listContainer.innerHTML = '';
+      
+      let startD = userConfig.startDate ? new Date(userConfig.startDate) : new Date();
+      let startYear = startD.getFullYear();
+      let startMonth = startD.getMonth();
+      let totalMonthsPlan = parseInt(userConfig.planDuration || 12, 10);
+
+      for (let i = 0; i < totalMonthsPlan; i++) {
+        let targetDate = new Date(startYear, startMonth + i, 1);
+        let tY = targetDate.getFullYear();
+        let tM = targetDate.getMonth();
+        let mKey = `${tY}-${String(tM).padStart(2, '0')}`;
+        
+        let mStr = targetDate.toLocaleString(localeLang, { month: 'long', year: 'numeric' });
+        
+        let displayVal = "";
+        let valColor = "#10b981";
+
+        if (monthlyMap[mKey] !== undefined) {
+          displayVal = `₹${monthlyMap[mKey].toLocaleString('en-IN')}`;
+        } else {
+          if (tY < currentYear || (tY === currentYear && tM < currentMonthIndex)) {
+            displayVal = "XX";
+            valColor = "#ef4444";
+          } else if (tY === currentYear && tM === currentMonthIndex) {
+            displayVal = "₹0";
+            valColor = "#38bdf8";
+          } else {
+            displayVal = "₹0";
+            valColor = "var(--subtext-color)";
+          }
+        }
+
+        let row = document.createElement('div');
+        row.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:var(--input-bg); border:1px solid var(--border-color); padding:10px 14px; border-radius:10px;";
+        row.innerHTML = `<span style="font-weight:700; font-size:0.9rem; color:var(--text-color);">${mStr}</span><span style="font-weight:900; font-size:0.95rem; color:${valColor};">${displayVal}</span>`;
+        listContainer.appendChild(row);
+      }
+    }
+
+    function openAllMonthsModal() {
+      playClickSound('snd-btn');
+      updateMonthlyReview();
+      document.getElementById('all-months-modal').style.display = 'flex';
+    }
+
+    function closeAllMonthsModal() {
+      playClickSound('snd-tab');
+      document.getElementById('all-months-modal').style.display = 'none';
+    }
+
     function updateStats() {
-      let saved = state.reduce((acc, val, i) => val ? acc + boxes[i] : acc, 0);
-      let rem = TOTAL - saved;
-      let pct = ((saved / TOTAL) * 100).toFixed(1);
+      let saved = 0;
+
+      state.forEach((item, i) => {
+        if (item && item.done) {
+          saved += boxes[i];
+        }
+      });
+
+      const target = userConfig.target;
+      let rem = target - saved;
+      let pctNum = (saved / target) * 100;
+      let pctStr = pctNum.toFixed(1);
 
       document.getElementById('saved').innerText = `₹${saved.toLocaleString('en-IN')}`;
       document.getElementById('rem').innerText = `₹${rem.toLocaleString('en-IN')}`;
-      document.getElementById('pct').innerText = `${pct}%`;
-      document.getElementById('fill').style.width = `${pct}%`;
-      
-      localStorage.setItem('my_savings_v3', JSON.stringify(state));
+      document.getElementById('pct').innerText = `${pctStr}%`;
+      document.getElementById('fill').style.width = `${pctStr}%`;
+
+      updateMonthlyReview();
+      checkMilestoneBadges(pctNum);
+
+      if (saved < target) {
+        hasTriggeredSuccess = false;
+        pendingSuccessTrigger = false;
+      }
+
+      updateFilterCounts();
+      SecureStorage.setItem('my_savings_state_v10', state);
+    }
+
+    function openResetModal() { playClickSound('snd-btn'); document.getElementById('reset-modal').style.display = 'flex'; }
+    function closeResetModal() { playClickSound('snd-tab'); document.getElementById('reset-modal').style.display = 'none'; }
+
+    function executeReset() {
+      closeResetModal();
+      playResetSound();
+      SecureStorage.removeItem('my_savings_config_v10');
+      SecureStorage.removeItem('my_savings_state_v10');
+      SecureStorage.removeItem('my_savings_badges_v10');
+      SecureStorage.removeItem('my_savings_denoms_v10');
+      userConfig = null;
+      state = null;
+      savedBadges = { 25: false, 50: false, 75: false, 100: false };
+      selectedDenoms = [10, 20, 50];
+      hasTriggeredSuccess = false;
+      pendingSuccessTrigger = false;
+      initApp();
     }
 
     function toggleCell(index) {
-      if (state[index]) {
+      if (state[index].done) {
         if (isUnlockMode) {
-          state[index] = false;
-          playUnlockSound();
+          playUnlockSound(); 
+          state[index] = { done: false, date: null };
+          render(); 
+          updateStats();
         } else {
-          alert("Yeh box LOCKED hai! Isse unlock karne ke liye niche 'Enable Unlock Mode' par click karein.");
-          return;
+          alert(translations[currentLang].lockedAlert);
         }
       } else {
-        state[index] = true;
-        playCoinSound();
+        if (isUnlockMode) {
+          alert(translations[currentLang].unlockedWarning);
+          return;
+        }
+        playCoinSound(); 
+        state[index] = { done: true, date: getFormattedDate() };
+        render(); 
+        updateStats();
       }
-      render();
-      updateStats();
     }
 
     function toggleUnlockMode() {
-      playClickSound();
+      playClickSound('snd-btn');
       isUnlockMode = !isUnlockMode;
       const btn = document.getElementById('unlock-btn');
+      const t = translations[currentLang];
       if (isUnlockMode) {
         document.body.classList.add('unlock-mode');
         btn.classList.add('active');
-        btn.innerText = "🔓 UNLOCK MODE ON (Tap any locked box to unlock)";
+        btn.innerText = t.unlockModeOn;
       } else {
         document.body.classList.remove('unlock-mode');
         btn.classList.remove('active');
-        btn.innerText = "🔒 Lock Active (Tap to Enable Unlock Mode)";
+        btn.innerText = t.unlockActive;
       }
-      render();
-    }
-
-    function setFilter(amt, btn) {
-      playClickSound();
-      currentFilter = amt;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
       render();
     }
 
     function render() {
       const g = document.getElementById('grid');
       g.innerHTML = '';
-      
       boxes.forEach((amt, i) => {
         if (currentFilter !== 'ALL' && amt !== currentFilter) return;
 
+        const isDone = state[i] && state[i].done;
         const d = document.createElement('div');
-        d.className = `cell ${state[i] ? 'done' : ''}`;
-        d.innerText = `₹${amt}`;
+        d.className = `cell ${isDone ? 'done' : ''}`;
+        d.innerHTML = `<span>₹${amt}</span>${(isDone && state[i].date) ? `<span class="cell-date">${state[i].date}</span>` : ''}`;
         d.onclick = () => toggleCell(i);
         g.appendChild(d);
       });
     }
 
-    function resetApp() {
-      if(confirm('Kya aap saara progress reset karna chahte hain?')) {
-        playResetSound();
-        state.fill(false);
-        render();
-        updateStats();
-      }
-    }
-
-    render();
-    updateStats();
+    initApp();
   </script>
-   <script>
-  // WebIntoApp Popup Remover
-  const removePopup = setInterval(() => {
-    const popups = document.querySelectorAll('div[class*="webintoapp"], div[id*="webintoapp"], iframe[src*="webintoapp"], .wia-modal, .wia-dialog');
-    popups.forEach(el => el.remove());
-  }, 100);
-
-  // Stop checking after 10 seconds
-  setTimeout(() => clearInterval(removePopup), 10000);
-   </script>
-   
 </body>
 </html>
