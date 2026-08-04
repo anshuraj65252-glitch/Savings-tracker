@@ -1,0 +1,9 @@
+{
+  "name": "Smart save",
+  "short_name": "Smart save",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": []
+}
