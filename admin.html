@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ad Control Admin Panel</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background: #0f172a; color: #f8fafc; padding: 20px; display: flex; justify-content: center; }
+    .panel { width: 100%; max-width: 420px; background: #1e293b; padding: 20px; border-radius: 16px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 14px; }
+    h2 { color: #38bdf8; text-align: center; }
+    .input-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.9rem; font-weight: bold; color: #cbd5e1; }
+    input, textarea { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px; color: #fff; font-size: 1rem; outline: none; }
+    input:focus { border-color: #38bdf8; }
+    .btn { background: #0284c7; color: #fff; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+    .btn:hover { background: #0369a1; }
+  </style>
+</head>
+<body>
+
+  <div class="panel">
+    <h2>🔐 Ad Control Dashboard</h2>
+
+    <div id="login-box" style="display: flex; flex-direction: column; gap: 12px;">
+      <p style="font-size: 0.85rem; color: #94a3b8;">Enter Admin Password (Default: 1234)</p>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="admin-pass" placeholder="Enter password">
+      </div>
+      <button class="btn" onclick="verifyLogin()">Login</button>
+    </div>
+
+    <div id="form-box" style="display: none; flex-direction: column; gap: 12px;">
+      <p style="color: #10b981; font-weight: bold; font-size: 0.85rem;">✔ Logged In Successfully</p>
+      
+      <div class="input-group">
+        <label>Start Date</label>
+        <input type="date" id="adm-start">
+      </div>
+      <div class="input-group">
+        <label>End Date</label>
+        <input type="date" id="adm-end">
+      </div>
+      <div class="input-group">
+        <label>Company / Brand Name</label>
+        <input type="text" id="adm-source">
+      </div>
+      <div class="input-group">
+        <label>Top Description</label>
+        <input type="text" id="adm-desc">
+      </div>
+      <div class="input-group">
+        <label>Main Headline (Offer Title)</label>
+        <input type="text" id="adm-title">
+      </div>
+      <div class="input-group">
+        <label>Subtitle</label>
+        <input type="text" id="adm-subtitle">
+      </div>
+      <div class="input-group">
+        <label>Small Details Text</label>
+        <input type="text" id="adm-subtext">
+      </div>
+      <div class="input-group">
+        <label>Bottom Tag (Badge)</label>
+        <input type="text" id="adm-tag">
+      </div>
+      <div class="input-group">
+        <label>Button Text</label>
+        <input type="text" id="adm-btntext">
+      </div>
+      <div class="input-group">
+        <label>Button Link URL</label>
+        <input type="text" id="adm-link">
+      </div>
+
+      <button class="btn" onclick="updateCloudAd()">Save & Publish Live 🚀</button>
+    </div>
+  </div>
+
+  <script>
+    const BIN_ID = "6a72b1edda38895dfebb28b8";
+    const MASTER_KEY = "$2a$10$NhgQH1u1nDVQXvYdKVtU1.taM5rcDGuuKwJ1JQPdtwc1QRtIQvXEm";
+
+    function verifyLogin() {
+      let pass = document.getElementById('admin-pass').value;
+      if (pass === "1234") {
+        document.getElementById('login-box').style.display = 'none';
+        document.getElementById('form-box').style.display = 'flex';
+        loadCurrentData();
+      } else {
+        alert("Wrong Password!");
+      }
+    }
+
+    async function loadCurrentData() {
+      let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { "X-Master-Key": MASTER_KEY }
+      });
+      let data = await res.json();
+      let ad = data.record;
+
+      document.getElementById('adm-start').value = ad.startDate || "";
+      document.getElementById('adm-end').value = ad.endDate || "";
+      document.getElementById('adm-source').value = ad.source || "";
+      document.getElementById('adm-desc').value = ad.desc || "";
+      document.getElementById('adm-title').value = ad.title || "";
+      document.getElementById('adm-subtitle').value = ad.subtitle || "";
+      document.getElementById('adm-subtext').value = ad.subtext || "";
+      document.getElementById('adm-tag').value = ad.tag || "";
+      document.getElementById('adm-btntext').value = ad.btnText || "";
+      document.getElementById('adm-link').value = ad.link || "";
+    }
+
+    async function updateCloudAd() {
+      let updatedData = {
+        startDate: document.getElementById('adm-start').value,
+        endDate: document.getElementById('adm-end').value,
+        source: document.getElementById('adm-source').value,
+        desc: document.getElementById('adm-desc').value,
+        title: document.getElementById('adm-title').value,
+        subtitle: document.getElementById('adm-subtitle').value,
+        subtext: document.getElementById('adm-subtext').value,
+        tag: document.getElementById('adm-tag').value,
+        btnText: document.getElementById('adm-btntext').value,
+        link: document.getElementById('adm-link').value
+      };
+
+      let res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": MASTER_KEY
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (res.ok) {
+        alert("Ad updated and published live successfully for all users!");
+      } else {
+        alert("Failed to update ad.");
+      }
+    }
+  </script>
+</body>
+</html>
