@@ -209,6 +209,37 @@
     .btn-reset { background: var(--card-bg); color: #ef4444; border: 1px dashed #ef4444; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.95rem; opacity: 0.9; transition: 0.2s; }
     .btn-reset:hover { opacity: 1; background: rgba(239, 68, 68, 0.1); }
 
+    /* PROFESSIONAL PROMOTIONAL POPUP AD STYLES */
+    .popup-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center;
+      z-index: 99999; backdrop-filter: blur(4px);
+    }
+    .popup-card {
+      background: #0f172a; border: 1px solid #334155; border-radius: 20px;
+      width: 280px; padding: 16px; position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); text-align: center;
+    }
+    .popup-close {
+      position: absolute; top: 10px; right: 10px; background: transparent;
+      border: none; color: #ef4444; font-size: 18px; font-weight: bold; cursor: pointer;
+      width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+    }
+    .popup-source { font-size: 11px; letter-spacing: 1px; color: #94a3b8; margin-bottom: 8px; font-weight: 700; }
+    .popup-text { font-size: 11px; color: #cbd5e1; margin-bottom: 12px; line-height: 1.3; }
+    .popup-banner-img {
+      background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+      border-radius: 12px; padding: 16px 10px; color: #fff; margin-bottom: 14px;
+    }
+    .offer-big { font-size: 18px; font-weight: 900; display: block; text-transform: uppercase; color: #facc15; }
+    .offer-day { font-size: 15px; font-weight: 800; letter-spacing: 1px; display: block; margin: 4px 0; }
+    .offer-sub { font-size: 9px; color: #fca5a5; }
+    .brand-tag { font-size: 12px; font-weight: bold; margin-top: 8px; color: #e2e8f0; }
+    .popup-order-btn {
+      display: block; background: #1e293b; color: #f8fafc; border: 1px solid #475569;
+      padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; text-decoration: none;
+    }
+
     /* Hide WebIntoApp Popups */
     div[class*="webintoapp"], div[id*="webintoapp"], iframe[src*="webintoapp"], .wia-modal, .wia-dialog {
       display: none !important; visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;
@@ -224,6 +255,24 @@
   <audio id="snd-tab" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/tab.mp3" preload="auto"></audio>
   <audio id="snd-btn" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/Active.mp3" preload="auto"></audio>
   <audio id="snd-reset" src="https://github.com/anshuraj65252-glitch/Savings-tracker/raw/refs/heads/main/reset(%201sec%20)_QTSjpsVa.mp3" preload="auto"></audio>
+
+  <!-- DYNAMIC PROMOTIONAL POPUP AD MODAL -->
+  <div id="promoPopup" class="popup-overlay">
+    <div class="popup-card">
+      <button class="popup-close" onclick="closePopup()">✕</button>
+      <div class="popup-content">
+        <h3 class="popup-source">THE TIMES OF INDIA</h3>
+        <p class="popup-text">special promotional advertisement offer banner popup</p>
+        <div class="popup-banner-img">
+          <span class="offer-big">buy one get one</span>
+          <span class="offer-day">SPECIAL OFFER</span>
+          <p class="offer-sub">limited time campaign validity</p>
+          <div class="brand-tag">SPONSORED</div>
+        </div>
+        <a href="#" class="popup-order-btn" onclick="closePopup()">Order Now</a>
+      </div>
+    </div>
+  </div>
 
   <!-- SPLASH SCREEN -->
   <div id="splash-screen">
@@ -418,10 +467,7 @@
     /* ========================================================
        ADVANCED SECURITY & ANTI-TAMPER MODULE (ANTI-HACK)
        ======================================================== */
-    // 1. Disable Right-Click Context Menu
     document.addEventListener('contextmenu', e => e.preventDefault());
-
-    // 2. Disable Developer Shortcuts (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
     document.addEventListener('keydown', e => {
       if (
         e.keyCode === 123 || 
@@ -433,16 +479,13 @@
       }
     });
 
-    // 3. Encrypted Storage Layer to Prevent Direct LocalStorage Manipulation
     const SecureStorage = {
       setItem(key, value) {
         try {
           const jsonStr = JSON.stringify(value);
-          const encoded = btoa(encodeURIComponent(jsonStr)); // Base64 + URI encode obfuscation
+          const encoded = btoa(encodeURIComponent(jsonStr));
           localStorage.setItem(key, encoded);
-        } catch (err) {
-          console.error("Storage error");
-        }
+        } catch (err) {}
       },
       getItem(key) {
         try {
@@ -468,6 +511,30 @@
     let savedBadges = SecureStorage.getItem('my_savings_badges_v10') || { 25: false, 50: false, 75: false, 100: false };
     let selectedDenoms = SecureStorage.getItem('my_savings_denoms_v10') || [10, 20, 50];
 
+    /* ========================================================
+       CAMPAIGN AD SCHEDULING & VALIDITY CONTROL (AUTO-EXPIRY)
+       ======================================================== */
+    function checkAndShowAdPopup() {
+      // यहाँ विज्ञापन की शुरुआत और आखिरी तारीख सेट करें (YYYY-MM-DD फॉर्मेट में)
+      const adStartDate = new Date("2026-08-01"); 
+      const adEndDate = new Date("2026-08-31"); 
+      const today = new Date();
+
+      // अगर आज की तारीख तय समय सीमा के अंदर है, तभी पॉप-अप दिखेगा
+      if (today >= adStartDate && today <= adEndDate) {
+        setTimeout(() => {
+          document.getElementById('promoPopup').style.display = 'flex';
+        }, 800); // ऐप खुलने के 0.8 सेकंड बाद पॉप-अप आएगा
+      } else {
+        document.getElementById('promoPopup').style.display = 'none';
+      }
+    }
+
+    function closePopup() {
+      playClickSound('snd-tab');
+      document.getElementById('promoPopup').style.display = 'none';
+    }
+
     const translations = {
       en: {
         setupTitle: "🚀 Savings Goal Setup 🚀",
@@ -476,86 +543,53 @@
         labelTarget: "Target Amount (₹)",
         labelDenoms: "Select Any 3 Denominations for Boxes",
         labelPlan: "Select Plan Duration",
-        planOptions: {
-          1: "1 Month Plan",
-          3: "3 Months Plan",
-          6: "6 Months Plan",
-          12: "12 Months Plan"
-        },
+        planOptions: { 1: "1 Month Plan", 3: "3 Months Plan", 6: "6 Months Plan", 12: "12 Months Plan" },
         btnStart: "Start Tracking ➔",
         monthlyTitle: "CURRENT MONTH SAVINGS",
         allMonths: "All Months",
         allMonthsTitle: "📅 Monthly Savings History",
-        saved: "Saved",
-        remaining: "Remaining",
-        target: "Target",
-        all: "All",
+        saved: "Saved", remaining: "Remaining", target: "Target", all: "All",
         unlockActive: "🔒 Lock Active (Tap to Enable Unlock Mode)",
         unlockModeOn: "🔓 UNLOCK MODE ON (Tap box to unlock)",
         resetAppBtn: "⚠️ Change Target / Reset App",
         secTitle: "🔒 Security Confirmation",
         resetDesc: "Are you sure you want to change your target or reset all data? This action will erase all previous progress!",
-        cancel: "Cancel",
-        yesReset: "Yes, Reset",
+        cancel: "Cancel", yesReset: "Yes, Reset",
         lockedAlert: "This box is LOCKED! Turn on 'Unlock Mode' to unlock it.",
         unlockedWarning: "You are in Unlock Mode! You can only tap on completed (green) boxes to unselect them.",
         setupAlert: "Please fill in your Name, Target Amount, and select exactly 3 denominations!",
         denomLimitAlert: "You must select exactly 3 denominations!",
-        welcome: "Welcome",
-        month: "Month",
-        months: "Months Plan",
-        badge25Title: "🥉 Bronze Milestone Unlocked!",
-        badge25Desc: "Fantastic! You have completed 25% of your savings goal.",
-        badge50Title: "🥈 Silver Milestone Unlocked!",
-        badge50Desc: "Incredible progress! You are halfway (50%) through your target.",
-        badge75Title: "🥇 Gold Milestone Unlocked!",
-        badge75Desc: "Amazing dedication! You've crossed 75% of your savings goal.",
-        badge100Title: "💎 Diamond Pro Unlocked!",
-        badge100Desc: "Phenomenal! You have successfully completed 100% of your target!"
+        welcome: "Welcome", month: "Month", months: "Months Plan",
+        badge25Title: "🥉 Bronze Milestone Unlocked!", badge25Desc: "Fantastic! You have completed 25% of your savings goal.",
+        badge50Title: "🥈 Silver Milestone Unlocked!", badge50Desc: "Incredible progress! You are halfway (50%) through your target.",
+        badge75Title: "🥇 Gold Milestone Unlocked!", badge75Desc: "Amazing dedication! You've crossed 75% of your savings goal.",
+        badge100Title: "💎 Diamond Pro Unlocked!", badge100Desc: "Phenomenal! You have successfully completed 100% of your target!"
       },
       hi: {
         setupTitle: "🚀 सेविंग्स गोल सेटअप 🚀",
         setupSubtitle: "अपना पर्सनल ट्रैकर शुरू करें",
-        labelName: "आपका नाम",
-        labelTarget: "टारगेट राशि (₹)",
+        labelName: "आपका नाम", labelTarget: "टारगेट राशि (₹)",
         labelDenoms: "बॉक्स के लिए कोई भी 3 विकल्प चुनें",
         labelPlan: "प्लान की अवधि चुनें",
-        planOptions: {
-          1: "1 महीने का प्लान",
-          3: "3 महीने का प्लान",
-          6: "6 महीने का प्लान",
-          12: "12 महीने का प्लान"
-        },
+        planOptions: { 1: "1 महीने का प्लान", 3: "3 महीने का प्लान", 6: "6 महीने का प्लान", 12: "12 महीने का प्लान" },
         btnStart: "ट्रैकिंग शुरू करें ➔",
-        monthlyTitle: "इस महीने की बचत",
-        allMonths: "सभी महीने",
-        allMonthsTitle: "📅 मासिक बचत इतिहास",
-        saved: "बचत",
-        remaining: "शेष",
-        target: "टारगेट",
-        all: "सभी",
+        monthlyTitle: "इस महीने की बचत", allMonths: "सभी महीने", allMonthsTitle: "📅 मासिक बचत इतिहास",
+        saved: "बचत", remaining: "शेष", target: "टारगेट", all: "सभी",
         unlockActive: "🔒 लॉक एक्टिव (अनलॉक मोड के लिए टैप करें)",
         unlockModeOn: "🔓 अनलॉक मोड चालू है (बॉक्स खोलने के लिए टैप करें)",
         resetAppBtn: "⚠️ टारगेट बदलें / ऐप रीसेट करें",
         secTitle: "🔒 सुरक्षा पुष्टि",
         resetDesc: "क्या आप अपना टारगेट बदलना या सारा डेटा रीसेट करना चाहते हैं? यह एक्शन पुराना सारा progress मिटा देगा!",
-        cancel: "रद्द करें",
-        yesReset: "हाँ, रीसेट करें",
+        cancel: "रद्द करें", yesReset: "हाँ, रीसेट करें",
         lockedAlert: "यह बॉक्स LOCKED है! अनलॉक करने के लिए 'Unlock Mode' ऑन करें।",
         unlockedWarning: "आप अनलॉक मोड में हैं! आप केवल भरे हुए (green) बॉक्स पर टैप करके उन्हें हटा सकते हैं।",
         setupAlert: "कृपया अपना नाम, टारगेट राशि भरें और ठीक 3 विकल्प चुनें!",
         denomLimitAlert: "आपको ठीक 3 विकल्प (Denominations) चुनने होंगे!",
-        welcome: "स्वागत है",
-        month: "महीना",
-        months: "महीनों का प्लान",
-        badge25Title: "🥉 ब्रॉन्ज माइलस्टोन अनलॉक!",
-        badge25Desc: "शानदार! आपने अपने सेविंग्स गोल का 25% पूरा कर लिया है।",
-        badge50Title: "🥈 सिल्वर माइलस्टोन अनलॉक!",
-        badge50Desc: "अद्भुत प्रगति! आप अपने टारगेट के आधे (50%) रास्ते पर पहुंच चुके हैं।",
-        badge75Title: "🥇 गोल्ड माइलस्टोन अनलॉक!",
-        badge75Desc: "बेहतरीन लगन! आपने 75% बचत पूरी कर ली है।",
-        badge100Title: "💎 डायमंड प्रो अनलॉक!",
-        badge100Desc: "असाधारण! आपने अपना 100% टारगेट सफलतापूर्वक पूरा कर लिया है!"
+        welcome: "स्वागत है", month: "महीना", months: "महीनों का प्लान",
+        badge25Title: "🥉 ब्रॉन्ज माइलस्टोन अनलॉक!", badge25Desc: "शानदार! आपने अपने सेविंग्स गोल का 25% पूरा कर लिया है।",
+        badge50Title: "🥈 सिल्वर माइलस्टोन अनलॉक!", badge50Desc: "अद्भुत प्रगति! आप अपने टारगेट के आधे (50%) रास्ते पर पहुंच चुके हैं।",
+        badge75Title: "🥇 गोल्ड माइलस्टोन अनलॉक!", badge75Desc: "बेहतरीन लगन! आपने 75% बचत पूरी कर ली है।",
+        badge100Title: "💎 डायमंड प्रो अनलॉक!", badge100Desc: "असाधारण! आपने अपना 100% टारगेट सफलतापूर्वक पूरा कर लिया है!"
       }
     };
 
@@ -563,16 +597,10 @@
       playClickSound('snd-tab');
       const index = selectedDenoms.indexOf(val);
       if (index > -1) {
-        if (selectedDenoms.length <= 1) {
-          alert(translations[currentLang].denomLimitAlert);
-          return;
-        }
+        if (selectedDenoms.length <= 1) { alert(translations[currentLang].denomLimitAlert); return; }
         selectedDenoms.splice(index, 1);
       } else {
-        if (selectedDenoms.length >= 3) {
-          alert(translations[currentLang].denomLimitAlert);
-          return;
-        }
+        if (selectedDenoms.length >= 3) { alert(translations[currentLang].denomLimitAlert); return; }
         selectedDenoms.push(val);
       }
       selectedDenoms.sort((a, b) => a - b);
@@ -623,9 +651,7 @@
       const setupPlanSelect = document.getElementById('setup-plan');
       if (setupPlanSelect) {
         Array.from(setupPlanSelect.options).forEach(opt => {
-          if (t.planOptions[opt.value]) {
-            opt.text = t.planOptions[opt.value];
-          }
+          if (t.planOptions[opt.value]) opt.text = t.planOptions[opt.value];
         });
       }
 
@@ -652,9 +678,7 @@
         document.getElementById('unlock-btn').innerText = t.unlockActive;
       }
 
-      if (userConfig && state) {
-        updateStats();
-      }
+      if (userConfig && state) updateStats();
       updateDenomUI();
     }
 
@@ -672,16 +696,12 @@
       applyThemeAndLangUI();
     }
 
-    // INSTANT LOW-LATENCY AUDIO ENGINE
     function initAudio() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    // Global listener to instantly warm-up audio context on first user tap anywhere
-    window.addEventListener('pointerdown', () => {
-      initAudio();
-    }, { once: true });
+    window.addEventListener('pointerdown', () => { initAudio(); }, { once: true });
 
     function playCustomSound(id, fallbackFn) {
       const el = document.getElementById(id);
@@ -715,13 +735,10 @@
       let generated = [];
       let currentTotal = 0;
       let sortedDenoms = [...denoms].sort((a, b) => b - a);
-
       while (currentTotal < target) {
         let remainder = target - currentTotal;
         let validDenoms = sortedDenoms.filter(d => d <= remainder);
-        if (validDenoms.length === 0) {
-          validDenoms = [sortedDenoms[sortedDenoms.length - 1]];
-        }
+        if (validDenoms.length === 0) validDenoms = [sortedDenoms[sortedDenoms.length - 1]];
         let chosenAmt = validDenoms[Math.floor(Math.random() * validDenoms.length)];
         generated.push(chosenAmt);
         currentTotal += chosenAmt;
@@ -729,9 +746,7 @@
       return generated;
     }
 
-    function capitalizeName(str) {
-      return str.replace(/\b\w/g, l => l.toUpperCase());
-    }
+    function capitalizeName(str) { return str.replace(/\b\w/g, l => l.toUpperCase()); }
 
     function initApp() {
       applyThemeAndLangUI();
@@ -750,9 +765,7 @@
         document.getElementById('target-display').innerText = `₹${userConfig.target.toLocaleString('en-IN')}`;
 
         boxes = userConfig.boxes;
-        if (!selectedDenoms || selectedDenoms.length !== 3) {
-          selectedDenoms = userConfig.denoms || [10, 20, 50];
-        }
+        if (!selectedDenoms || selectedDenoms.length !== 3) selectedDenoms = userConfig.denoms || [10, 20, 50];
 
         if (!state || state.length !== boxes.length) {
           state = new Array(boxes.length).fill(null).map(() => ({ done: false, date: null }));
@@ -762,6 +775,9 @@
         render();
         updateStats();
         updateBadgesUI();
+
+        // ऐप लोड होने पर एड कैंपेन की तारीख चेक करेगा
+        checkAndShowAdPopup();
       }
     }
 
@@ -777,7 +793,6 @@
       }
 
       playLoginSound();
-
       document.getElementById('setup-view').style.display = 'none';
       document.getElementById('splash-screen').style.display = 'flex';
 
@@ -823,14 +838,11 @@
       playClickSound('snd-tab');
       currentFilter = filterVal;
       document.querySelectorAll('.filter-tabs .filter-btn').forEach(b => b.classList.remove('active'));
-      
       if (filterVal === 'ALL') {
         document.getElementById('filter-all-btn').classList.add('active');
       } else {
         const idx = selectedDenoms.indexOf(filterVal);
-        if (idx !== -1) {
-          document.getElementById(`filter-btn-${idx}`).classList.add('active');
-        }
+        if (idx !== -1) document.getElementById(`filter-btn-${idx}`).classList.add('active');
       }
       render();
     }
@@ -838,21 +850,15 @@
     function updateFilterCounts() {
       let counts = {};
       selectedDenoms.forEach(d => { counts[d] = { total: 0, done: 0 }; });
-      
       boxes.forEach((amt, i) => {
         if (counts[amt]) {
           counts[amt].total++;
-          if (state[i] && state[i].done) {
-            counts[amt].done++;
-          }
+          if (state[i] && state[i].done) counts[amt].done++;
         }
       });
-
       selectedDenoms.forEach((d, idx) => {
         const btn = document.getElementById(`filter-btn-${idx}`);
-        if (btn && counts[d]) {
-          btn.innerText = `₹${d} (${counts[d].done}/${counts[d].total})`;
-        }
+        if (btn && counts[d]) btn.innerText = `₹${d} (${counts[d].done}/${counts[d].total})`;
       });
     }
 
@@ -861,22 +867,14 @@
       let triggeredThreshold = null;
 
       if (pctNum >= 100 && !savedBadges[100]) {
-        triggeredThreshold = 100;
-        savedBadges[100] = true;
-        pendingSuccessTrigger = true; 
+        triggeredThreshold = 100; savedBadges[100] = true; pendingSuccessTrigger = true; 
         showBadgePopup("💎", t.badge100Title, t.badge100Desc);
       } else if (pctNum >= 75 && pctNum < 100 && !savedBadges[75]) {
-        triggeredThreshold = 75;
-        savedBadges[75] = true;
-        showBadgePopup("🥇", t.badge75Title, t.badge75Desc);
+        triggeredThreshold = 75; savedBadges[75] = true; showBadgePopup("🥇", t.badge75Title, t.badge75Desc);
       } else if (pctNum >= 50 && pctNum < 75 && !savedBadges[50]) {
-        triggeredThreshold = 50;
-        savedBadges[50] = true;
-        showBadgePopup("🥈", t.badge50Title, t.badge50Desc);
+        triggeredThreshold = 50; savedBadges[50] = true; showBadgePopup("🥈", t.badge50Title, t.badge50Desc);
       } else if (pctNum >= 25 && pctNum < 50 && !savedBadges[25]) {
-        triggeredThreshold = 25;
-        savedBadges[25] = true;
-        showBadgePopup("🥉", t.badge25Title, t.badge25Desc);
+        triggeredThreshold = 25; savedBadges[25] = true; showBadgePopup("🥉", t.badge25Title, t.badge25Desc);
       }
 
       if (triggeredThreshold !== null) {
@@ -888,11 +886,8 @@
     function updateBadgesUI() {
       [25, 50, 75, 100].forEach(milestone => {
         const el = document.getElementById(`badge-${milestone}`);
-        if (savedBadges[milestone]) {
-          el.classList.add('unlocked');
-        } else {
-          el.classList.remove('unlocked');
-        }
+        if (savedBadges[milestone]) el.classList.add('unlocked');
+        else el.classList.remove('unlocked');
       });
     }
 
@@ -907,15 +902,11 @@
     function closeBadgePopup() {
       playClickSound('snd-tab');
       document.getElementById('badge-screen').style.display = 'none';
-
       if (pendingSuccessTrigger) {
-        pendingSuccessTrigger = false;
-        hasTriggeredSuccess = true;
+        pendingSuccessTrigger = false; hasTriggeredSuccess = true;
         playLoginSound();
         document.getElementById('success-screen').style.display = 'flex';
-        setTimeout(() => {
-          document.getElementById('success-screen').style.display = 'none';
-        }, 3000);
+        setTimeout(() => { document.getElementById('success-screen').style.display = 'none'; }, 3000);
       }
     }
 
@@ -923,7 +914,6 @@
       const now = new Date();
       const currentMonthIndex = now.getMonth(); 
       const currentYear = now.getFullYear();
-      
       const localeLang = currentLang === 'hi' ? 'hi-IN' : 'en-US';
       const monthName = now.toLocaleString(localeLang, { month: 'long' });
       document.getElementById('current-month-name').innerText = `${monthName} ${currentYear}`;
@@ -935,22 +925,16 @@
         if (item && item.done && item.date) {
           const parts = item.date.split('/');
           if (parts.length === 3) {
-            let dDay = parseInt(parts[0], 10);
             let dMonth = parseInt(parts[1], 10) - 1;
             let dYear = 2000 + parseInt(parts[2], 10);
-            
             let mKey = `${dYear}-${String(dMonth).padStart(2, '0')}`;
             monthlyMap[mKey] = (monthlyMap[mKey] || 0) + boxes[i];
-
-            if (dMonth === currentMonthIndex && dYear === currentYear) {
-              currentMonthTotal += boxes[i];
-            }
+            if (dMonth === currentMonthIndex && dYear === currentYear) currentMonthTotal += boxes[i];
           }
         }
       });
 
       document.getElementById('current-month-saved').innerText = `₹${currentMonthTotal.toLocaleString('en-IN')}`;
-
       const listContainer = document.getElementById('all-months-list');
       listContainer.innerHTML = '';
       
@@ -964,25 +948,15 @@
         let tY = targetDate.getFullYear();
         let tM = targetDate.getMonth();
         let mKey = `${tY}-${String(tM).padStart(2, '0')}`;
-        
         let mStr = targetDate.toLocaleString(localeLang, { month: 'long', year: 'numeric' });
         
-        let displayVal = "";
-        let valColor = "#10b981";
-
+        let displayVal = "", valColor = "#10b981";
         if (monthlyMap[mKey] !== undefined) {
           displayVal = `₹${monthlyMap[mKey].toLocaleString('en-IN')}`;
         } else {
-          if (tY < currentYear || (tY === currentYear && tM < currentMonthIndex)) {
-            displayVal = "XX";
-            valColor = "#ef4444";
-          } else if (tY === currentYear && tM === currentMonthIndex) {
-            displayVal = "₹0";
-            valColor = "#38bdf8";
-          } else {
-            displayVal = "₹0";
-            valColor = "var(--subtext-color)";
-          }
+          if (tY < currentYear || (tY === currentYear && tM < currentMonthIndex)) { displayVal = "XX"; valColor = "#ef4444"; }
+          else if (tY === currentYear && tM === currentMonthIndex) { displayVal = "₹0"; valColor = "#38bdf8"; }
+          else { displayVal = "₹0"; valColor = "var(--subtext-color)"; }
         }
 
         let row = document.createElement('div');
@@ -992,25 +966,12 @@
       }
     }
 
-    function openAllMonthsModal() {
-      playClickSound('snd-btn');
-      updateMonthlyReview();
-      document.getElementById('all-months-modal').style.display = 'flex';
-    }
-
-    function closeAllMonthsModal() {
-      playClickSound('snd-tab');
-      document.getElementById('all-months-modal').style.display = 'none';
-    }
+    function openAllMonthsModal() { playClickSound('snd-btn'); updateMonthlyReview(); document.getElementById('all-months-modal').style.display = 'flex'; }
+    function closeAllMonthsModal() { playClickSound('snd-tab'); document.getElementById('all-months-modal').style.display = 'none'; }
 
     function updateStats() {
       let saved = 0;
-
-      state.forEach((item, i) => {
-        if (item && item.done) {
-          saved += boxes[i];
-        }
-      });
+      state.forEach((item, i) => { if (item && item.done) saved += boxes[i]; });
 
       const target = userConfig.target;
       let rem = target - saved;
@@ -1025,11 +986,7 @@
       updateMonthlyReview();
       checkMilestoneBadges(pctNum);
 
-      if (saved < target) {
-        hasTriggeredSuccess = false;
-        pendingSuccessTrigger = false;
-      }
-
+      if (saved < target) { hasTriggeredSuccess = false; pendingSuccessTrigger = false; }
       updateFilterCounts();
       SecureStorage.setItem('my_savings_state_v10', state);
     }
@@ -1044,34 +1001,23 @@
       SecureStorage.removeItem('my_savings_state_v10');
       SecureStorage.removeItem('my_savings_badges_v10');
       SecureStorage.removeItem('my_savings_denoms_v10');
-      userConfig = null;
-      state = null;
+      userConfig = null; state = null;
       savedBadges = { 25: false, 50: false, 75: false, 100: false };
       selectedDenoms = [10, 20, 50];
-      hasTriggeredSuccess = false;
-      pendingSuccessTrigger = false;
+      hasTriggeredSuccess = false; pendingSuccessTrigger = false;
       initApp();
     }
 
     function toggleCell(index) {
       if (state[index].done) {
         if (isUnlockMode) {
-          playUnlockSound(); 
-          state[index] = { done: false, date: null };
-          render(); 
-          updateStats();
-        } else {
-          alert(translations[currentLang].lockedAlert);
-        }
+          playUnlockSound(); state[index] = { done: false, date: null };
+          render(); updateStats();
+        } else { alert(translations[currentLang].lockedAlert); }
       } else {
-        if (isUnlockMode) {
-          alert(translations[currentLang].unlockedWarning);
-          return;
-        }
-        playCoinSound(); 
-        state[index] = { done: true, date: getFormattedDate() };
-        render(); 
-        updateStats();
+        if (isUnlockMode) { alert(translations[currentLang].unlockedWarning); return; }
+        playCoinSound(); state[index] = { done: true, date: getFormattedDate() };
+        render(); updateStats();
       }
     }
 
@@ -1081,13 +1027,9 @@
       const btn = document.getElementById('unlock-btn');
       const t = translations[currentLang];
       if (isUnlockMode) {
-        document.body.classList.add('unlock-mode');
-        btn.classList.add('active');
-        btn.innerText = t.unlockModeOn;
+        document.body.classList.add('unlock-mode'); btn.classList.add('active'); btn.innerText = t.unlockModeOn;
       } else {
-        document.body.classList.remove('unlock-mode');
-        btn.classList.remove('active');
-        btn.innerText = t.unlockActive;
+        document.body.classList.remove('unlock-mode'); btn.classList.remove('active'); btn.innerText = t.unlockActive;
       }
       render();
     }
@@ -1097,7 +1039,6 @@
       g.innerHTML = '';
       boxes.forEach((amt, i) => {
         if (currentFilter !== 'ALL' && amt !== currentFilter) return;
-
         const isDone = state[i] && state[i].done;
         const d = document.createElement('div');
         d.className = `cell ${isDone ? 'done' : ''}`;
