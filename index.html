@@ -515,16 +515,14 @@
        CAMPAIGN AD SCHEDULING & VALIDITY CONTROL (AUTO-EXPIRY)
        ======================================================== */
     function checkAndShowAdPopup() {
-      // यहाँ विज्ञापन की शुरुआत और आखिरी तारीख सेट करें (YYYY-MM-DD फॉर्मेट में)
       const adStartDate = new Date("2026-08-01"); 
       const adEndDate = new Date("2026-08-31"); 
       const today = new Date();
 
-      // अगर आज की तारीख तय समय सीमा के अंदर है, तभी पॉप-अप दिखेगा
       if (today >= adStartDate && today <= adEndDate) {
         setTimeout(() => {
           document.getElementById('promoPopup').style.display = 'flex';
-        }, 800); // ऐप खुलने के 0.8 सेकंड बाद पॉप-अप आएगा
+        }, 800); 
       } else {
         document.getElementById('promoPopup').style.display = 'none';
       }
@@ -776,7 +774,6 @@
         updateStats();
         updateBadgesUI();
 
-        // ऐप लोड होने पर एड कैंपेन की तारीख चेक करेगा
         checkAndShowAdPopup();
       }
     }
