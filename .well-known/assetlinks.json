@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "io.github.anshuraj65252_glitch.twa",
-        "sha256_cert_fingerprints": ["CC:34:07:FF:9E:59:25:23:2A:6C:63:C1:5E:B7:82:D6:A9:C3:31:23:11:30:13:8A:6D:FB:E9:9D:F5:C3:83:F6"]
+        "sha256_cert_fingerprints": ["85:EF:3F:F9:57:BA:E0:CF:C5:13:6C:E1:F2:9A:94:8A:02:84:B2:16:64:DB:6C:DD:AD:D0:27:97:DE:FD:04:0F"]
       }
     }]
