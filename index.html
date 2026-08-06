@@ -395,7 +395,7 @@
       <div class="setup-card">
         <div class="input-group">
           <label id="txt-label-name">Your Name</label>
-          <input type="text" id="setup-name" placeholder="Ex: Arnav Soni" value="" autocomplete="off" readonly onfocus="this.removeAttribute('readonly');" name="random_user_name_field_xyz">
+          <input type="text" id="setup-name" placeholder="Ex: Arnav Soni" value="" autocomplete="nope" readonly onfocus="this.removeAttribute('readonly');" name="random_user_name_field_xyz">
         </div>
         <div class="input-group">
           <label id="txt-label-target">Target Amount (₹)</label>
@@ -567,6 +567,13 @@
   </div>
 
   <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const nameField = document.getElementById('setup-name');
+        if (nameField) nameField.value = '';
+      }, 50);
+    });
+
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
       if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
@@ -574,6 +581,7 @@
         return false;
       }
     });
+    ...
 
     const SecureStorage = {
       setItem(key, value) {
