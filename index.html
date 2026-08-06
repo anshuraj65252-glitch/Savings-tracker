@@ -568,20 +568,20 @@
 
   <script>
     window.userTypingName = false;
-function clearNameFieldIfUntouched() {
-  if (window.userTypingName) return;
-  const nameField = document.getElementById('setup-name');
-  if (nameField) nameField.value = '';
-}
-window.addEventListener('DOMContentLoaded', clearNameFieldIfUntouched);
-window.addEventListener('load', clearNameFieldIfUntouched);
-window.addEventListener('pageshow', clearNameFieldIfUntouched);
-let nameClearTries = 0;
-const nameClearTimer = setInterval(() => {
-  clearNameFieldIfUntouched();
-  nameClearTries++;
-  if (nameClearTries > 15 || window.userTypingName) clearInterval(nameClearTimer);
-}, 150);
+    function clearNameFieldIfUntouched() {
+      if (window.userTypingName) return;
+      const nameField = document.getElementById('setup-name');
+      if (nameField) nameField.value = '';
+    }
+    clearNameFieldIfUntouched();
+    window.addEventListener('load', clearNameFieldIfUntouched);
+    window.addEventListener('pageshow', clearNameFieldIfUntouched);
+    let nameClearTries = 0;
+    const nameClearTimer = setInterval(() => {
+      clearNameFieldIfUntouched();
+      nameClearTries++;
+      if (nameClearTries > 15 || window.userTypingName) clearInterval(nameClearTimer);
+    }, 150);
 
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
