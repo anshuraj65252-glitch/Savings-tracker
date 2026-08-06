@@ -315,6 +315,9 @@
 
 <video id="ad-video"
        controls
+  autoplay
+    muted
+    playsinline
        style="display:none;width:100%;border-radius:12px;margin-bottom:10px;">
 </video>
           <span class="offer-big" id="ad-headline">buy one get one</span>
@@ -645,22 +648,37 @@
 const adImage = document.getElementById('ad-image');
 const adVideo = document.getElementById('ad-video');
 
-if (ad.image && ad.image.trim() !== "") {
-    adImage.src = ad.image;
-    adImage.style.display = "block";
-} else {
-    adImage.style.display = "none";
-}
-
 if (ad.video && ad.video.trim() !== "") {
     adVideo.src = ad.video;
+    adVideo.load();
     adVideo.style.display = "block";
+    adImage.style.display = "none";
+} else if (ad.image && ad.image.trim() !== "") {
+    adImage.src = ad.image;
+    adImage.style.display = "block";
+    adVideo.style.display = "none";
 } else {
+    adImage.style.display = "none";
     adVideo.style.display = "none";
 }
           setTimeout(() => {
             document.getElementById('promoPopup').style.display = 'flex';
-          }, 800);
+          },ad.popupDelay || 800);
+        const popupBox = document.querySelector('.popup-card');
+if (popupBox) {
+    popupBox.style.backgroundColor = ad.bgColor || "#ffffff";
+    popupBox.style.color = ad.textColor || "#000000";
+}
+
+const adBtn = document.getElementById('ad-btnLink');
+if (adBtn) {
+    adBtn.style.backgroundColor = ad.buttonColor || "#007bff";
+}  
+        if (ad.autoClose > 0) {
+    setTimeout(() => {
+        document.getElementById('promoPopup').style.display = 'none';
+    }, ad.autoClose * 1000);
+}  
         } else {
           document.getElementById('promoPopup').style.display = 'none';
         }
