@@ -69,52 +69,54 @@
     #pin-lock-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: var(--bg-color); display: none; flex-direction: column;
-      justify-content: space-between; align-items: center; z-index: 99999;
-      padding: 16px 16px 28px 16px; box-sizing: border-box;
+      justify-content: space-between; align-items: center; z-index: 999999;
+      padding: 20px 20px 36px 20px; box-sizing: border-box;
     }
-    .pin-top-bar { width: 100%; max-width: 420px; display: flex; justify-content: space-between; align-items: center; }
+    .pin-top-bar { width: 100%; max-width: 380px; display: flex; justify-content: space-between; align-items: center; padding-top: 6px; }
     .pin-container {
-      width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 10px; flex: 1; justify-content: center;
+      width: 100%; max-width: 380px; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; flex: 1; justify-content: center; padding-bottom: 12px;
     }
-    .pin-logo { font-size: 2.4rem; margin-bottom: 2px; }
+    .pin-logo { font-size: 2.6rem; margin-bottom: 8px; }
     .pin-title { color: #38bdf8; font-size: 1.5rem; font-weight: 900; letter-spacing: 1px; }
-    .pin-subtitle { color: var(--subtext-color); font-size: 0.95rem; margin-bottom: 4px; }
-    .pin-dots { display: flex; gap: 16px; margin: 8px 0 14px 0; }
+    .pin-subtitle { color: var(--subtext-color); font-size: 0.92rem; margin-top: 4px; margin-bottom: 6px; }
+    .pin-dots { display: flex; gap: 22px; margin: 14px 0 4px 0; }
     .pin-dot {
-      width: 18px; height: 18px; border-radius: 50%;
-      border: 2px solid #38bdf8; background: transparent;
-      transition: background 0.15s, transform 0.1s;
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2.5px solid #38bdf8; background: transparent;
+      transition: background 0.15s, transform 0.12s;
     }
-    .pin-dot.filled { background: #38bdf8; transform: scale(1.2); }
+    .pin-dot.filled { background: #38bdf8; transform: scale(1.25); box-shadow: 0 0 8px rgba(56,189,248,0.5); }
+    .pin-error { color: #ef4444; font-size: 0.88rem; font-weight: bold; min-height: 22px; text-align: center; margin-top: 6px; }
+    .forgot-pin-btn {
+      background: none; border: none; color: #38bdf8;
+      font-size: 0.9rem; cursor: pointer; padding: 8px 16px;
+      text-decoration: underline; opacity: 0.85; margin-top: 4px;
+    }
     .pin-keypad {
       display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 12px; width: 100%; max-width: 380px;
-      margin-top: auto; padding-bottom: 10px;
+      gap: 14px; width: 100%; max-width: 320px;
     }
     .pin-key {
-      background: var(--card-bg); border: 1px solid var(--border-color);
-      border-radius: 14px; color: var(--text-color);
-      font-size: 1.5rem; font-weight: 700; padding: 16px 0;
+      background: var(--card-bg); border: 1.5px solid var(--border-color);
+      border-radius: 16px; color: var(--text-color);
+      font-size: 1.6rem; font-weight: 700; padding: 18px 0;
       cursor: pointer; text-align: center;
       transition: background 0.1s, transform 0.1s, border-color 0.1s;
       -webkit-tap-highlight-color: transparent; user-select: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     }
     .pin-key:active {
-      background: #0284c7; border-color: #38bdf8; color: #fff; transform: scale(0.93);
+      background: #0284c7; border-color: #38bdf8; color: #fff; transform: scale(0.92);
+      box-shadow: 0 0 12px rgba(56,189,248,0.3);
     }
-    .pin-key.del { color: #ef4444; border-color: #ef4444; font-size: 1.2rem; }
-    .pin-key.del:active { background: rgba(239,68,68,0.2); }
-    
-    .pin-key.clear-all-btn { grid-column: 1; color: #f59e0b; border-color: #f59e0b; font-size: 1.1rem; }
-    .pin-key.clear-all-btn:active { background: rgba(245, 158, 11, 0.2); }
-    .pin-key.zero-btn { grid-column: 2; }
-    .pin-key.del-btn { grid-column: 3; }
-
-    .pin-error { color: #ef4444; font-size: 0.9rem; font-weight: bold; min-height: 20px; }
+    .pin-key.empty { visibility: hidden; box-shadow: none; border: none; background: none; }
+    .pin-key.del { color: #ef4444; border-color: rgba(239,68,68,0.4); font-size: 1.3rem; }
+    .pin-key.del:active { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #fff; }
     @keyframes pinShake {
       0%,100% { transform: translateX(0); }
-      20% { transform: translateX(-8px); }
-      40% { transform: translateX(8px); }
+      20% { transform: translateX(-9px); }
+      40% { transform: translateX(9px); }
       60% { transform: translateX(-6px); }
       80% { transform: translateX(6px); }
     }
@@ -352,6 +354,7 @@
         <div class="pin-dot" id="pd3"></div>
       </div>
       <div class="pin-error" id="pin-error-msg"></div>
+      <button class="forgot-pin-btn" id="forgot-pin-btn" onclick="forgotPinWithDeviceAuth()" style="display:none;">🔑 Forgot PIN?</button>
     </div>
     <div class="pin-keypad" id="pin-keypad-grid"></div>
   </div>
@@ -875,45 +878,43 @@
     let pinBuffer = '';
     let savedPin = localStorage.getItem('smart_save_pin');
 
+    function getPinAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
     function playPinTap() {
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        const ctx = getPinAudioCtx();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
-        osc.frequency.value = 800;
-        osc.type = 'sine';
+        osc.frequency.value = 800; osc.type = 'sine';
         gain.gain.setValueAtTime(0.18, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.08);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.08);
       } catch(e) {}
     }
 
     function playPinError() {
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        const ctx = getPinAudioCtx();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
-        osc.frequency.value = 220;
-        osc.type = 'sawtooth';
+        osc.frequency.value = 220; osc.type = 'sawtooth';
         gain.gain.setValueAtTime(0.15, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.25);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.25);
       } catch(e) {}
     }
 
     function playPinSuccess() {
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = getPinAudioCtx();
         [600, 800, 1000].forEach((freq, i) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
+          const osc = ctx.createOscillator(); const gain = ctx.createGain();
           osc.connect(gain); gain.connect(ctx.destination);
-          osc.frequency.value = freq;
-          osc.type = 'sine';
+          osc.frequency.value = freq; osc.type = 'sine';
           const t = ctx.currentTime + i * 0.08;
           gain.gain.setValueAtTime(0.15, t);
           gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
@@ -1009,6 +1010,7 @@
 
       if (!savedPin) {
         localStorage.setItem('smart_save_pin', pinBuffer);
+        registerDeviceCredential();
         playPinSuccess();
         document.getElementById('pin-lock-screen').style.display = 'none';
         proceedAfterPin();
@@ -1048,11 +1050,72 @@
       screen.style.display = 'flex';
       updatePinThemeUI();
       updatePinLangUI();
-
+      const forgotBtn = document.getElementById('forgot-pin-btn');
       if (!savedPin) {
+        pinMode = 'setup';
         document.getElementById('pin-screen-subtitle').innerText = currentLang === 'en' ? 'Set a new 4-digit PIN' : 'नया 4-अंकी PIN सेट करें';
+        if (forgotBtn) forgotBtn.style.display = 'none';
       } else {
+        pinMode = 'verify';
         document.getElementById('pin-screen-subtitle').innerText = currentLang === 'en' ? 'Enter your 4-digit PIN' : 'अपना 4-अंकी PIN दर्ज करें';
+        if (forgotBtn) forgotBtn.style.display = 'block';
+      }
+    }
+
+    async function registerDeviceCredential() {
+      if (!window.PublicKeyCredential) return;
+      try {
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        const userId = new Uint8Array(16);
+        crypto.getRandomValues(userId);
+        const credential = await navigator.credentials.create({
+          publicKey: {
+            challenge, rp: { name: "Smart Save", id: window.location.hostname },
+            user: { id: userId, name: "smartsave-user", displayName: "Smart Save User" },
+            pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+            authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", requireResidentKey: false },
+            timeout: 60000
+          }
+        });
+        const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+        localStorage.setItem('smart_save_webauthn_cred', credId);
+      } catch(e) { console.log('WebAuthn skipped:', e.message); }
+    }
+
+    async function forgotPinWithDeviceAuth() {
+      const msgBox = document.getElementById('pin-error-msg');
+      const credIdB64 = localStorage.getItem('smart_save_webauthn_cred');
+      if (!window.PublicKeyCredential || !credIdB64) {
+        msgBox.style.color = '#f59e0b';
+        msgBox.innerText = '⚠️ Reset PIN from app settings (🔑 icon) after login.';
+        setTimeout(() => { msgBox.innerText = ''; }, 3000);
+        return;
+      }
+      try {
+        msgBox.style.color = '#38bdf8';
+        msgBox.innerText = '🔐 Verify with device lock...';
+        const credIdBytes = Uint8Array.from(atob(credIdB64), c => c.charCodeAt(0));
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        await navigator.credentials.get({
+          publicKey: {
+            challenge, rpId: window.location.hostname,
+            allowCredentials: [{ type: 'public-key', id: credIdBytes.buffer, transports: ['internal'] }],
+            userVerification: 'required', timeout: 60000
+          }
+        });
+        msgBox.style.color = '#10b981';
+        msgBox.innerText = '✅ Verified!';
+        setTimeout(() => {
+          localStorage.removeItem('smart_save_pin');
+          localStorage.removeItem('smart_save_webauthn_cred');
+          showPinScreen();
+        }, 600);
+      } catch(err) {
+        msgBox.style.color = '#ef4444';
+        msgBox.innerText = err.name === 'NotAllowedError' ? '❌ Authentication cancelled.' : '⚠️ Could not verify. Try again.';
+        setTimeout(() => { msgBox.innerText = ''; }, 2500);
       }
     }
 
