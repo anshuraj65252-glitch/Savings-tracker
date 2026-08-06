@@ -5,7 +5,7 @@
   
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Smart Save Tracker</title>
+  <title>Smart Save Tracker - Arnav Academy</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     
@@ -99,9 +99,14 @@
     }
     .pin-key.del { color: #ef4444; border-color: #ef4444; font-size: 1.2rem; }
     .pin-key.del:active { background: rgba(239,68,68,0.2); }
-    .pin-key.empty { visibility: hidden; }
+    
+    /* Layout for Full Delete, 0, and Back button in the last row */
+    .pin-key.clear-all-btn { grid-column: 1; color: #f59e0b; border-color: #f59e0b; font-size: 1.1rem; }
+    .pin-key.clear-all-btn:active { background: rgba(245, 158, 11, 0.2); }
+    .pin-key.zero-btn { grid-column: 2; }
+    .pin-key.del-btn { grid-column: 3; }
+
     .pin-error { color: #ef4444; font-size: 0.9rem; font-weight: bold; min-height: 20px; }
-    .pin-setup-label { color: var(--subtext-color); font-size: 0.85rem; text-align: center; max-width: 260px; }
     @keyframes pinShake {
       0%,100% { transform: translateX(0); }
       20% { transform: translateX(-8px); }
@@ -306,7 +311,7 @@
     <div class="popup-card">
       <button class="popup-close" onclick="closePopup()">✕</button>
       <div class="popup-content">
-        <h3 class="popup-source" id="ad-brandName">THE TIMES OF INDIA</h3>
+        <h3 class="popup-source" id="ad-brandName">ARNAV ACADEMY</h3>
         <p class="popup-text" id="ad-topDesc">special promotional advertisement offer banner popup</p>
         <div class="popup-banner-img">
           <img id="ad-image" src="" style="display:none;width:100%;border-radius:12px;margin-bottom:10px;">
@@ -343,7 +348,6 @@
     </div>
     <div class="pin-error" id="pin-error-msg"></div>
     <div class="pin-keypad" id="pin-keypad-grid"></div>
-    <button id="forgot-pin-btn" onclick="forgotPinWithDeviceAuth()" style="display:none;background:none;border:none;color:#38bdf8;font-size:0.9rem;cursor:pointer;padding:8px;text-decoration:underline;margin-top:-8px;"> Forgot PIN</button>
   </div>
 
   <!-- SUCCESS CELEBRATION SCREEN -->
@@ -376,7 +380,7 @@
       <div class="setup-card">
         <div class="input-group">
           <label id="txt-label-name">Your Name</label>
-          <input type="text" id="setup-name" placeholder="Ex: Arnav Soni">
+          <input type="text" id="setup-name" placeholder="Ex: Arnav Soni" value="Arnav Soni">
         </div>
         <div class="input-group">
           <label id="txt-label-target">Target Amount (₹)</label>
@@ -773,15 +777,13 @@
       document.getElementById('lang-toggle-btn-main').innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
       
       const pinLangBtn = document.getElementById('pin-lang-btn');
-      if (pinLangBtn) pinLangBtn.innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
+      if (pinLangBtn) pinLangBtn.innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 हिंदी";
       const pinThemeBtn = document.getElementById('pin-theme-btn');
       if (pinThemeBtn) pinThemeBtn.innerText = currentTheme === 'dark' ? "🌙 Dark" : "☀️ Light";
       
       const pinSub = document.getElementById('pin-screen-subtitle');
       if (pinSub) {
-        if (pinMode === 'setup') pinSub.innerText = currentLang === 'en' ? 'Set a new 4-digit PIN' : 'नया 4-अंकी PIN सेट करें';
-        else if (pinMode === 'confirm') pinSub.innerText = currentLang === 'en' ? 'Confirm your PIN' : 'PIN दोबारा दर्ज करें';
-        else pinSub.innerText = currentLang === 'en' ? 'Enter your 4-digit PIN' : 'अपना 4-अंकी PIN दर्ज करें';
+        pinSub.innerText = currentLang === 'en' ? 'Enter your 4-digit PIN' : 'अपना 4-अंकी PIN दर्ज करें';
       }
 
       document.getElementById('txt-setup-title').innerText = t.setupTitle;
@@ -865,8 +867,7 @@
     function playResetSound() { playCustomSound('snd-reset', () => { initAudio(); }); }
 
     let pinBuffer = '';
-    let pinMode = 'verify';
-    let pinSetupFirst = '';
+    let savedPin = localStorage.getItem('smart_save_pin');
 
     function playPinTap() {
       try {
@@ -930,17 +931,27 @@
         btn.onclick = () => pinKey(d);
         grid.appendChild(btn);
       });
-      const empty1 = document.createElement('button');
-      empty1.className = 'pin-key empty';
+      
+      // Full Delete ('C') on left of 0, 0 in middle, and Back key ('⌫') on right
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'pin-key clear-all-btn';
+      clearBtn.textContent = 'C';
+      clearBtn.title = 'Clear All';
+      clearBtn.onclick = () => pinClearAll();
+
       const zeroBtn = document.createElement('button');
-      zeroBtn.className = 'pin-key';
+      zeroBtn.className = 'pin-key zero-btn';
       zeroBtn.textContent = '0';
       zeroBtn.onclick = () => pinKey('0');
-      const empty2 = document.createElement('button');
-      empty2.className = 'pin-key empty';
-      grid.appendChild(empty1);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'pin-key del del-btn';
+      delBtn.textContent = '⌫';
+      delBtn.onclick = () => pinDelete();
+
+      grid.appendChild(clearBtn);
       grid.appendChild(zeroBtn);
-      grid.appendChild(empty2);
+      grid.appendChild(delBtn);
     }
 
     function updatePinThemeUI() {
@@ -972,10 +983,31 @@
       }
     }
 
-    function handlePinComplete() {
-      const savedPin = localStorage.getItem('smart_save_pin');
+    function pinDelete() {
+      if (pinBuffer.length > 0) {
+        playPinTap();
+        pinBuffer = pinBuffer.slice(0, -1);
+        updatePinDots();
+      }
+    }
 
-      if (pinMode === 'verify') {
+    function pinClearAll() {
+      if (pinBuffer.length > 0) {
+        playPinTap();
+        pinBuffer = '';
+        updatePinDots();
+      }
+    }
+
+    function handlePinComplete() {
+      savedPin = localStorage.getItem('smart_save_pin');
+
+      if (!savedPin) {
+        localStorage.setItem('smart_save_pin', pinBuffer);
+        playPinSuccess();
+        document.getElementById('pin-lock-screen').style.display = 'none';
+        proceedAfterPin();
+      } else {
         if (pinBuffer === savedPin) {
           playPinSuccess();
           document.getElementById('pin-lock-screen').style.display = 'none';
@@ -994,32 +1026,6 @@
             document.getElementById('pin-error-msg').innerText = '';
           }, 600);
         }
-      } else if (pinMode === 'setup') {
-        pinSetupFirst = pinBuffer;
-        pinBuffer = '';
-        updatePinDots();
-        shufflePinKeypad();
-        document.getElementById('pin-screen-subtitle').innerText = 'Confirm your PIN';
-        pinMode = 'confirm';
-      } else if (pinMode === 'confirm') {
-        if (pinBuffer === pinSetupFirst) {
-          playPinSuccess();
-          localStorage.setItem('smart_save_pin', pinBuffer);
-          registerDeviceCredential();
-          document.getElementById('pin-lock-screen').style.display = 'none';
-          proceedAfterPin();
-        } else {
-          playPinError();
-          document.getElementById('pin-error-msg').innerText = '❌ PINs don\'t match. Try again.';
-          setTimeout(() => {
-            pinBuffer = ''; pinSetupFirst = '';
-            updatePinDots();
-            shufflePinKeypad();
-            document.getElementById('pin-error-msg').innerText = '';
-            document.getElementById('pin-screen-subtitle').innerText = currentLang === 'en' ? 'Set a new 4-digit PIN' : 'नया 4-अंकी PIN सेट करें';
-            pinMode = 'setup';
-          }, 700);
-        }
       }
     }
 
@@ -1028,8 +1034,8 @@
     }
 
     function showPinScreen() {
-      const savedPin = localStorage.getItem('smart_save_pin');
-      pinBuffer = ''; pinSetupFirst = '';
+      savedPin = localStorage.getItem('smart_save_pin');
+      pinBuffer = '';
       updatePinDots();
       shufflePinKeypad();
       document.getElementById('pin-error-msg').innerText = '';
@@ -1038,90 +1044,10 @@
       updatePinThemeUI();
       updatePinLangUI();
 
-      const forgotBtn = document.getElementById('forgot-pin-btn');
       if (!savedPin) {
-        pinMode = 'setup';
-        document.getElementById('pin-screen-subtitle').innerText = 'Set a new 4-digit PIN';
-        forgotBtn.style.display = 'none';
+        document.getElementById('pin-screen-subtitle').innerText = currentLang === 'en' ? 'Set a new 4-digit PIN' : 'नया 4-अंकी PIN सेट करें';
       } else {
-        pinMode = 'verify';
-        document.getElementById('pin-screen-subtitle').innerText = 'Enter your 4-digit PIN';
-        forgotBtn.style.display = 'block';
-      }
-    }
-
-    async function registerDeviceCredential() {
-      if (!window.PublicKeyCredential) return;
-      try {
-        const challenge = new Uint8Array(32);
-        crypto.getRandomValues(challenge);
-        const userId = new Uint8Array(16);
-        crypto.getRandomValues(userId);
-
-        const credential = await navigator.credentials.create({
-          publicKey: {
-            challenge: challenge,
-            rp: { name: "Smart Save", id: window.location.hostname },
-            user: { id: userId, name: "smartsave-user", displayName: "Smart Save User" },
-            pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-            authenticatorSelection: {
-              authenticatorAttachment: "platform",
-              userVerification: "required",
-              requireResidentKey: false
-            },
-            timeout: 60000
-          }
-        });
-
-        const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-        localStorage.setItem('smart_save_webauthn_cred', credId);
-      } catch(e) {}
-    }
-
-    async function forgotPinWithDeviceAuth() {
-      const msgBox = document.getElementById('pin-error-msg');
-      const credIdB64 = localStorage.getItem('smart_save_webauthn_cred');
-
-      if (!window.PublicKeyCredential || !credIdB64) {
-        msgBox.style.color = '#f59e0b';
-        msgBox.innerText = '⚠️ Device auth not set up. Please reinstall the app.';
-        setTimeout(() => { msgBox.innerText = ''; }, 2500);
-        return;
-      }
-
-      try {
-        msgBox.style.color = '#38bdf8';
-        msgBox.innerText = '🔐 Verify with device lock...';
-
-        const credIdBytes = Uint8Array.from(atob(credIdB64), c => c.charCodeAt(0));
-        const challenge = new Uint8Array(32);
-        crypto.getRandomValues(challenge);
-
-        await navigator.credentials.get({
-          publicKey: {
-            challenge: challenge,
-            rpId: window.location.hostname,
-            allowCredentials: [{
-              type: 'public-key',
-              id: credIdBytes.buffer,
-              transports: ['internal']
-            }],
-            userVerification: 'required',
-            timeout: 60000
-          }
-        });
-
-        msgBox.style.color = '#10b981';
-        msgBox.innerText = '✅ Verified!';
-        setTimeout(() => {
-          localStorage.removeItem('smart_save_pin');
-          showPinScreen();
-        }, 600);
-
-      } catch(err) {
-        msgBox.style.color = '#ef4444';
-        msgBox.innerText = err.name === 'NotAllowedError' ? '❌ Authentication cancelled or failed.' : '⚠️ Could not verify. Try again.';
-        setTimeout(() => { msgBox.style.color = '#ef4444'; msgBox.innerText = ''; }, 2500);
+        document.getElementById('pin-screen-subtitle').innerText = currentLang === 'en' ? 'Enter your 4-digit PIN' : 'अपना 4-अंकी PIN दर्ज करें';
       }
     }
 
@@ -1404,18 +1330,7 @@
 
     function openPinResetModal() {
       playClickSound('snd-tab');
-      document.getElementById('pin-reset-modal').style.display = 'flex';
-    }
-
-    function closePinResetModal() {
-      document.getElementById('pin-reset-modal').style.display = 'none';
-    }
-
-    function confirmPinReset() {
-      playClickSound('snd-reset');
       localStorage.removeItem('smart_save_pin');
-      localStorage.removeItem('smart_save_webauthn_cred');
-      closePinResetModal();
       showPinScreen();
     }
 
@@ -1429,6 +1344,7 @@
       SecureStorage.removeItem('my_savings_state_v10');
       SecureStorage.removeItem('my_savings_badges_v10');
       SecureStorage.removeItem('my_savings_denoms_v10');
+      localStorage.removeItem('smart_save_pin');
       userConfig = null; state = null;
       savedBadges = { 25: false, 50: false, 75: false, 100: false };
       selectedDenoms = [10, 20, 50];
