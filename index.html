@@ -309,17 +309,8 @@
         <h3 class="popup-source" id="ad-brandName">THE TIMES OF INDIA</h3>
         <p class="popup-text" id="ad-topDesc">special promotional advertisement offer banner popup</p>
         <div class="popup-banner-img">
-          <img id="ad-image"
-     src=""
-     style="display:none;width:100%;border-radius:12px;margin-bottom:10px;">
-
-<video id="ad-video"
-       controls
-  autoplay
-    muted
-    playsinline
-       style="display:none;width:100%;border-radius:12px;margin-bottom:10px;">
-</video>
+          <img id="ad-image" src="" style="display:none;width:100%;border-radius:12px;margin-bottom:10px;">
+          <video id="ad-video" controls autoplay muted playsinline style="display:none;width:100%;border-radius:12px;margin-bottom:10px;"></video>
           <span class="offer-big" id="ad-headline">buy one get one</span>
           <span class="offer-day" id="ad-subtitle">SPECIAL OFFER</span>
           <p class="offer-sub" id="ad-smallText">limited time campaign validity</p>
@@ -351,9 +342,7 @@
       <div class="pin-dot" id="pd3"></div>
     </div>
     <div class="pin-error" id="pin-error-msg"></div>
-    <div class="pin-keypad" id="pin-keypad-grid">
-      <!-- Dynamically filled by shufflePinKeypad() -->
-    </div>
+    <div class="pin-keypad" id="pin-keypad-grid"></div>
     <button id="forgot-pin-btn" onclick="forgotPinWithDeviceAuth()" style="display:none;background:none;border:none;color:#38bdf8;font-size:0.9rem;cursor:pointer;padding:8px;text-decoration:underline;margin-top:-8px;"> Forgot PIN</button>
   </div>
 
@@ -403,7 +392,6 @@
           </div>
         </div>
 
-        <!-- Custom Denomination Picker (Choose exactly 3 out of 6) -->
         <div class="input-group">
           <label id="txt-label-denoms">Select Any 3 Denominations for Boxes</label>
           <div class="denom-chips-container" id="denom-selection-grid">
@@ -492,7 +480,7 @@
         </div>
       </div>
 
-      <!-- Filter Tabs (Dynamically populated based on chosen 3 denoms) -->
+      <!-- Filter Tabs -->
       <div class="filter-tabs" id="filter-tabs">
         <button class="filter-btn active" onclick="setFilter('ALL')" id="filter-all-btn">All</button>
         <button class="filter-btn" id="filter-btn-0" onclick="setFilter('dyn0')">₹10</button>
@@ -560,16 +548,9 @@
   </div>
 
   <script>
-    /* ========================================================
-       ADVANCED SECURITY & ANTI-TAMPER MODULE (ANTI-HACK)
-       ======================================================== */
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
-      if (
-        e.keyCode === 123 || 
-        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
-        (e.ctrlKey && e.keyCode === 85)
-      ) {
+      if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && e.keyCode === 85)) {
         e.preventDefault();
         return false;
       }
@@ -594,9 +575,7 @@
           return null;
         }
       },
-      removeItem(key) {
-        localStorage.removeItem(key);
-      }
+      removeItem(key) { localStorage.removeItem(key); }
     };
 
     let audioCtx = null;
@@ -607,15 +586,11 @@
     let savedBadges = SecureStorage.getItem('my_savings_badges_v10') || { 25: false, 50: false, 75: false, 100: false };
     let selectedDenoms = SecureStorage.getItem('my_savings_denoms_v10') || [10, 20, 50];
 
-    /* ========================================================
-       CAMPAIGN AD SCHEDULING & VALIDITY CONTROL (LIVE FROM JSONBIN)
-       ======================================================== */
     const AD_BIN_ID = "6a72b1edda38895dfebb28b8";
     const AD_MASTER_KEY = "$2a$10$3vOmxM/8iNc6MlI8ePOY4ezm2eficUJiA.qJI41nLrbXweeqnqrQC";
 
     async function checkAndShowAdPopup() {
       try {
-        // cache-buster query param so CDN/browser cache never serves stale ad data
         const response = await fetch(`https://api.jsonbin.io/v3/b/${AD_BIN_ID}/latest?t=${Date.now()}`, {
           headers: { 'X-Master-Key': AD_MASTER_KEY },
           cache: 'no-store'
@@ -630,11 +605,10 @@
 
         const adStartDate = new Date(ad.startDate);
         const adEndDate = new Date(ad.endDate);
-        adEndDate.setHours(23, 59, 59, 999); // include full end day
+        adEndDate.setHours(23, 59, 59, 999);
         const today = new Date();
 
         if (today >= adStartDate && today <= adEndDate) {
-          // Fill popup with live content from control panel
           document.getElementById('ad-brandName').innerText = ad.brandName || '';
           document.getElementById('ad-topDesc').innerText = ad.topDesc || '';
           document.getElementById('ad-headline').innerText = ad.headline || '';
@@ -644,41 +618,43 @@
           document.getElementById('ad-btnText').innerText = ad.btnText || 'Order Now';
           document.getElementById('ad-btnLink').href = ad.btnLink || '#';
 
-          // Load Image / Video from JSONBin
-const adImage = document.getElementById('ad-image');
-const adVideo = document.getElementById('ad-video');
+          const adImage = document.getElementById('ad-image');
+          const adVideo = document.getElementById('ad-video');
 
-if (ad.video && ad.video.trim() !== "") {
-    adVideo.src = ad.video;
-    adVideo.load();
-    adVideo.style.display = "block";
-    adImage.style.display = "none";
-} else if (ad.image && ad.image.trim() !== "") {
-    adImage.src = ad.image;
-    adImage.style.display = "block";
-    adVideo.style.display = "none";
-} else {
-    adImage.style.display = "none";
-    adVideo.style.display = "none";
-}
+          if (ad.video && ad.video.trim() !== "") {
+            adVideo.src = ad.video;
+            adVideo.load();
+            adVideo.style.display = "block";
+            adImage.style.display = "none";
+          } else if (ad.image && ad.image.trim() !== "") {
+            adImage.src = ad.image;
+            adImage.style.display = "block";
+            adVideo.style.display = "none";
+          } else {
+            adImage.style.display = "none";
+            adVideo.style.display = "none";
+          }
+
           setTimeout(() => {
             document.getElementById('promoPopup').style.display = 'flex';
-          },ad.popupDelay || 800);
-        const popupBox = document.querySelector('.popup-card');
-if (popupBox) {
-    popupBox.style.backgroundColor = ad.bgColor || "#ffffff";
-    popupBox.style.color = ad.textColor || "#000000";
-}
+          }, ad.popupDelay || 800);
 
-const adBtn = document.getElementById('ad-btnLink');
-if (adBtn) {
-    adBtn.style.backgroundColor = ad.buttonColor || "#007bff";
-}  
-        if (ad.autoClose > 0) {
-    setTimeout(() => {
-        document.getElementById('promoPopup').style.display = 'none';
-    }, ad.autoClose * 1000);
-}  
+          const popupBox = document.querySelector('.popup-card');
+          if (popupBox) {
+            popupBox.style.backgroundColor = ad.bgColor || "#0f172a";
+            popupBox.style.color = ad.textColor || "#f8fafc";
+          }
+
+          const adBtn = document.getElementById('ad-btnLink');
+          if (adBtn) {
+            adBtn.style.backgroundColor = ad.buttonColor || "#1e293b";
+          }  
+
+          if (ad.autoClose > 0) {
+            setTimeout(() => {
+              document.getElementById('promoPopup').style.display = 'none';
+            }, ad.autoClose * 1000);
+          }  
         } else {
           document.getElementById('promoPopup').style.display = 'none';
         }
@@ -795,12 +771,12 @@ if (adBtn) {
       const t = translations[currentLang];
       document.getElementById('lang-toggle-btn').innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
       document.getElementById('lang-toggle-btn-main').innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
-      // PIN screen buttons sync
+      
       const pinLangBtn = document.getElementById('pin-lang-btn');
       if (pinLangBtn) pinLangBtn.innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
       const pinThemeBtn = document.getElementById('pin-theme-btn');
       if (pinThemeBtn) pinThemeBtn.innerText = currentTheme === 'dark' ? "🌙 Dark" : "☀️ Light";
-      // PIN subtitle language update
+      
       const pinSub = document.getElementById('pin-screen-subtitle');
       if (pinSub) {
         if (pinMode === 'setup') pinSub.innerText = currentLang === 'en' ? 'Set a new 4-digit PIN' : 'नया 4-अंकी PIN सेट करें';
@@ -888,11 +864,8 @@ if (adBtn) {
     function playClickSound(soundId = 'snd-tab') { playCustomSound(soundId, () => { initAudio(); }); }
     function playResetSound() { playCustomSound('snd-reset', () => { initAudio(); }); }
 
-    /* ========================================================
-       PIN LOCK SYSTEM
-       ======================================================== */
     let pinBuffer = '';
-    let pinMode = 'verify'; // 'verify' | 'setup' | 'confirm'
+    let pinMode = 'verify';
     let pinSetupFirst = '';
 
     function playPinTap() {
@@ -943,7 +916,6 @@ if (adBtn) {
     }
 
     function shufflePinKeypad() {
-      // Shuffle digits 1-9, place in 9 slots, then 0 in middle of last row
       const digits = ['1','2','3','4','5','6','7','8','9'];
       for (let i = digits.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -958,7 +930,6 @@ if (adBtn) {
         btn.onclick = () => pinKey(d);
         grid.appendChild(btn);
       });
-      // Last row: empty, 0, empty
       const empty1 = document.createElement('button');
       empty1.className = 'pin-key empty';
       const zeroBtn = document.createElement('button');
@@ -992,7 +963,6 @@ if (adBtn) {
     function pinKey(digit) {
       if (pinBuffer.length >= 4) return;
       playPinTap();
-
       pinBuffer += digit;
       updatePinDots();
       document.getElementById('pin-error-msg').innerText = '';
@@ -1000,14 +970,6 @@ if (adBtn) {
       if (pinBuffer.length === 4) {
         setTimeout(() => handlePinComplete(), 150);
       }
-    }
-
-    function pinDelete() {
-      if (pinBuffer.length === 0) return;
-      playPinTap();
-      pinBuffer = pinBuffer.slice(0, -1);
-      updatePinDots();
-      document.getElementById('pin-error-msg').innerText = '';
     }
 
     function handlePinComplete() {
@@ -1043,7 +1005,7 @@ if (adBtn) {
         if (pinBuffer === pinSetupFirst) {
           playPinSuccess();
           localStorage.setItem('smart_save_pin', pinBuffer);
-          registerDeviceCredential(); // Register device biometric/PIN for forgot flow
+          registerDeviceCredential();
           document.getElementById('pin-lock-screen').style.display = 'none';
           proceedAfterPin();
         } else {
@@ -1062,7 +1024,6 @@ if (adBtn) {
     }
 
     function proceedAfterPin() {
-      // Continue normal app init after PIN success
       _initAppAfterPin();
     }
 
@@ -1077,9 +1038,7 @@ if (adBtn) {
       updatePinThemeUI();
       updatePinLangUI();
 
-      // Show "Forgot PIN?" only in verify mode (when PIN already exists)
       const forgotBtn = document.getElementById('forgot-pin-btn');
-
       if (!savedPin) {
         pinMode = 'setup';
         document.getElementById('pin-screen-subtitle').innerText = 'Set a new 4-digit PIN';
@@ -1114,13 +1073,9 @@ if (adBtn) {
           }
         });
 
-        // Store credential ID in localStorage
         const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
         localStorage.setItem('smart_save_webauthn_cred', credId);
-      } catch(e) {
-        // WebAuthn not supported or user declined — silently skip
-        console.log('WebAuthn registration skipped:', e.message);
-      }
+      } catch(e) {}
     }
 
     async function forgotPinWithDeviceAuth() {
@@ -1128,7 +1083,6 @@ if (adBtn) {
       const credIdB64 = localStorage.getItem('smart_save_webauthn_cred');
 
       if (!window.PublicKeyCredential || !credIdB64) {
-        // Fallback if WebAuthn not registered
         msgBox.style.color = '#f59e0b';
         msgBox.innerText = '⚠️ Device auth not set up. Please reinstall the app.';
         setTimeout(() => { msgBox.innerText = ''; }, 2500);
@@ -1157,7 +1111,6 @@ if (adBtn) {
           }
         });
 
-        // Device auth passed
         msgBox.style.color = '#10b981';
         msgBox.innerText = '✅ Verified!';
         setTimeout(() => {
@@ -1167,9 +1120,7 @@ if (adBtn) {
 
       } catch(err) {
         msgBox.style.color = '#ef4444';
-        msgBox.innerText = err.name === 'NotAllowedError'
-          ? '❌ Authentication cancelled or failed.'
-          : '⚠️ Could not verify. Try again.';
+        msgBox.innerText = err.name === 'NotAllowedError' ? '❌ Authentication cancelled or failed.' : '⚠️ Could not verify. Try again.';
         setTimeout(() => { msgBox.style.color = '#ef4444'; msgBox.innerText = ''; }, 2500);
       }
     }
@@ -1465,7 +1416,7 @@ if (adBtn) {
       localStorage.removeItem('smart_save_pin');
       localStorage.removeItem('smart_save_webauthn_cred');
       closePinResetModal();
-      showPinScreen(); // Will trigger registerDeviceCredential on new PIN setup
+      showPinScreen();
     }
 
     function openResetModal() { playClickSound('snd-btn'); document.getElementById('reset-modal').style.display = 'flex'; }
