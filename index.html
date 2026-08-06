@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> <meta name="theme-color" content="#0b1120">
+<head>
+  <meta name="theme-color" content="#0b1120">
   <link rel="manifest" href="./manifest.json">
-  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Save Tracker - Arnav Academy</title>
@@ -65,20 +65,21 @@
     .btn-primary { background: #0284c7; color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.2s; margin-top: 6px; }
     .btn-primary:hover { background: #0369a1; }
 
-    /* PIN Lock Screen */
+    /* PIN Lock Screen - Improved Full Width Keypad */
     #pin-lock-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: var(--bg-color); display: none; flex-direction: column;
-      justify-content: center; align-items: center; z-index: 99999;
-      padding: 20px; gap: 20px; box-sizing: border-box;
+      justify-content: space-between; align-items: center; z-index: 99999;
+      padding: 20px 16px 30px 16px; box-sizing: border-box;
     }
+    .pin-top-bar { width: 100%; max-width: 420px; display: flex; justify-content: space-between; align-items: center; }
     .pin-container {
-      width: 100%; max-width: 360px; display: flex; flex-direction: column; align-items: center; gap: 18px;
+      width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 16px; flex: 1; justify-content: center;
     }
     .pin-logo { font-size: 2.2rem; }
     .pin-title { color: #38bdf8; font-size: 1.4rem; font-weight: 900; letter-spacing: 1px; }
-    .pin-subtitle { color: var(--subtext-color); font-size: 0.9rem; margin-top: -10px; }
-    .pin-dots { display: flex; gap: 16px; }
+    .pin-subtitle { color: var(--subtext-color); font-size: 0.9rem; margin-top: -6px; }
+    .pin-dots { display: flex; gap: 16px; margin: 6px 0; }
     .pin-dot {
       width: 18px; height: 18px; border-radius: 50%;
       border: 2px solid #38bdf8; background: transparent;
@@ -87,7 +88,7 @@
     .pin-dot.filled { background: #38bdf8; transform: scale(1.2); }
     .pin-keypad {
       display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 12px; width: 100%;
+      gap: 12px; width: 100%; max-width: 380px;
     }
     .pin-key {
       background: var(--card-bg); border: 1px solid var(--border-color);
@@ -103,7 +104,6 @@
     .pin-key.del { color: #ef4444; border-color: #ef4444; font-size: 1.2rem; }
     .pin-key.del:active { background: rgba(239,68,68,0.2); }
     
-    /* Layout for Full Delete, 0, and Back button in the last row */
     .pin-key.clear-all-btn { grid-column: 1; color: #f59e0b; border-color: #f59e0b; font-size: 1.1rem; }
     .pin-key.clear-all-btn:active { background: rgba(245, 158, 11, 0.2); }
     .pin-key.zero-btn { grid-column: 2; }
@@ -336,11 +336,11 @@
 
   <!-- PIN LOCK SCREEN -->
   <div id="pin-lock-screen">
+    <div class="pin-top-bar">
+      <button class="icon-btn" onclick="toggleLanguage(); updatePinLangUI()" id="pin-lang-btn">🌐 हिंदी</button>
+      <button class="icon-btn" onclick="toggleTheme(); updatePinThemeUI()" id="pin-theme-btn">🌙 Dark</button>
+    </div>
     <div class="pin-container">
-      <div class="top-controls">
-        <button class="icon-btn" onclick="toggleLanguage(); updatePinLangUI()" id="pin-lang-btn">🌐 हिंदी</button>
-        <button class="icon-btn" onclick="toggleTheme(); updatePinThemeUI()" id="pin-theme-btn">🌙 Dark</button>
-      </div>
       <div class="pin-logo">🔐</div>
       <div class="pin-title">Smart Save</div>
       <div class="pin-subtitle" id="pin-screen-subtitle">Enter your 4-digit PIN</div>
@@ -353,6 +353,7 @@
       <div class="pin-error" id="pin-error-msg"></div>
       <div class="pin-keypad" id="pin-keypad-grid"></div>
     </div>
+    <div style="height: 10px;"></div>
   </div>
 
   <!-- SUCCESS CELEBRATION SCREEN -->
