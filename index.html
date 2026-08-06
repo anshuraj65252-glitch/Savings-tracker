@@ -395,7 +395,7 @@
       <div class="setup-card">
         <div class="input-group">
           <label id="txt-label-name">Your Name</label>
-          <input type="text" id="setup-name" placeholder="Ex: Arnav Soni" value="" autocomplete="nope" readonly onfocus="this.removeAttribute('readonly');" name="random_user_name_field_xyz">
+        <input type="text" id="setup-name" placeholder="Ex: Arnav Soni" value="" autocomplete="off" readonly onfocus="this.removeAttribute('readonly'); window.userTypingName = true;" name="random_user_name_field_xyz">
         </div>
         <div class="input-group">
           <label id="txt-label-target">Target Amount (₹)</label>
@@ -567,12 +567,21 @@
   </div>
 
   <script>
-    window.addEventListener('load', () => {
-      setTimeout(() => {
-        const nameField = document.getElementById('setup-name');
-        if (nameField) nameField.value = '';
-      }, 50);
-    });
+    window.userTypingName = false;
+function clearNameFieldIfUntouched() {
+  if (window.userTypingName) return;
+  const nameField = document.getElementById('setup-name');
+  if (nameField) nameField.value = '';
+}
+window.addEventListener('DOMContentLoaded', clearNameFieldIfUntouched);
+window.addEventListener('load', clearNameFieldIfUntouched);
+window.addEventListener('pageshow', clearNameFieldIfUntouched);
+let nameClearTries = 0;
+const nameClearTimer = setInterval(() => {
+  clearNameFieldIfUntouched();
+  nameClearTries++;
+  if (nameClearTries > 15 || window.userTypingName) clearInterval(nameClearTimer);
+}, 150);
 
     document.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('keydown', e => {
