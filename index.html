@@ -309,6 +309,14 @@
         <h3 class="popup-source" id="ad-brandName">THE TIMES OF INDIA</h3>
         <p class="popup-text" id="ad-topDesc">special promotional advertisement offer banner popup</p>
         <div class="popup-banner-img">
+          <img id="ad-image"
+     src=""
+     style="display:none;width:100%;border-radius:12px;margin-bottom:10px;">
+
+<video id="ad-video"
+       controls
+       style="display:none;width:100%;border-radius:12px;margin-bottom:10px;">
+</video>
           <span class="offer-big" id="ad-headline">buy one get one</span>
           <span class="offer-day" id="ad-subtitle">SPECIAL OFFER</span>
           <p class="offer-sub" id="ad-smallText">limited time campaign validity</p>
@@ -633,6 +641,23 @@
           document.getElementById('ad-btnText').innerText = ad.btnText || 'Order Now';
           document.getElementById('ad-btnLink').href = ad.btnLink || '#';
 
+          // Load Image / Video from JSONBin
+const adImage = document.getElementById('ad-image');
+const adVideo = document.getElementById('ad-video');
+
+if (ad.image && ad.image.trim() !== "") {
+    adImage.src = ad.image;
+    adImage.style.display = "block";
+} else {
+    adImage.style.display = "none";
+}
+
+if (ad.video && ad.video.trim() !== "") {
+    adVideo.src = ad.video;
+    adVideo.style.display = "block";
+} else {
+    adVideo.style.display = "none";
+}
           setTimeout(() => {
             document.getElementById('promoPopup').style.display = 'flex';
           }, 800);
