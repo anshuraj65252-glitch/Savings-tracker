@@ -65,6 +65,51 @@
     .btn-primary { background: #0284c7; color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.2s; margin-top: 6px; }
     .btn-primary:hover { background: #0369a1; }
 
+    /* PIN Lock Screen */
+    #pin-lock-screen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: var(--bg-color); display: none; flex-direction: column;
+      justify-content: center; align-items: center; z-index: 99999;
+      padding: 24px; gap: 28px;
+    }
+    .pin-logo { font-size: 2.5rem; }
+    .pin-title { color: #38bdf8; font-size: 1.4rem; font-weight: 900; letter-spacing: 1px; }
+    .pin-subtitle { color: var(--subtext-color); font-size: 0.9rem; margin-top: -20px; }
+    .pin-dots { display: flex; gap: 16px; }
+    .pin-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid #38bdf8; background: transparent;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .pin-dot.filled { background: #38bdf8; transform: scale(1.2); }
+    .pin-keypad {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; width: 100%; max-width: 280px;
+    }
+    .pin-key {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: 14px; color: var(--text-color);
+      font-size: 1.5rem; font-weight: 700; padding: 18px 0;
+      cursor: pointer; text-align: center;
+      transition: background 0.1s, transform 0.1s, border-color 0.1s;
+      -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+    .pin-key:active {
+      background: #0284c7; border-color: #38bdf8; color: #fff; transform: scale(0.93);
+    }
+    .pin-key.del { color: #ef4444; border-color: #ef4444; font-size: 1.2rem; }
+    .pin-key.del:active { background: rgba(239,68,68,0.2); }
+    .pin-key.empty { visibility: hidden; }
+    .pin-error { color: #ef4444; font-size: 0.9rem; font-weight: bold; min-height: 20px; }
+    .pin-setup-label { color: var(--subtext-color); font-size: 0.85rem; text-align: center; max-width: 260px; }
+    @keyframes pinShake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
+    }
+
     /* Splash Screen & Success Celebration Screen */
     #splash-screen, #success-screen, #badge-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -279,6 +324,28 @@
     <div class="splash-text">Smart Save</div>
   </div>
 
+  <!-- PIN LOCK SCREEN -->
+  <div id="pin-lock-screen">
+    <div class="top-controls" style="width:100%;max-width:480px;">
+      <button class="icon-btn" onclick="toggleLanguage(); updatePinLangUI()" id="pin-lang-btn">🌐 हिंदी</button>
+      <button class="icon-btn" onclick="toggleTheme(); updatePinThemeUI()" id="pin-theme-btn">🌙 Dark</button>
+    </div>
+    <div class="pin-logo">🔐</div>
+    <div class="pin-title">Smart Save</div>
+    <div class="pin-subtitle" id="pin-screen-subtitle">Enter your 4-digit PIN</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-error" id="pin-error-msg"></div>
+    <div class="pin-keypad" id="pin-keypad-grid">
+      <!-- Dynamically filled by shufflePinKeypad() -->
+    </div>
+    <button id="forgot-pin-btn" onclick="forgotPinWithDeviceAuth()" style="display:none;background:none;border:none;color:#38bdf8;font-size:0.9rem;cursor:pointer;padding:8px;text-decoration:underline;margin-top:-8px;">🔑 Forgot PIN?</button>
+  </div>
+
   <!-- SUCCESS CELEBRATION SCREEN -->
   <div id="success-screen">
     <div class="success-text">SUCCESS</div>
@@ -359,6 +426,7 @@
       
       <div class="top-controls">
         <button class="icon-btn" onclick="toggleLanguage()" id="lang-toggle-btn-main">🌐 हिंदी</button>
+        <button class="icon-btn" onclick="openPinResetModal()" title="Reset PIN">🔑</button>
         <button class="icon-btn" onclick="toggleTheme()" id="theme-toggle-btn-main">🌙 Dark</button>
       </div>
 
@@ -430,6 +498,23 @@
     <div class="controls">
       <button class="btn-unlock" id="unlock-btn" onclick="toggleUnlockMode()">🔒 Lock Active (Tap to Enable Unlock Mode)</button>
       <button class="btn-reset" id="txt-btn-reset-app" onclick="openResetModal()">⚠️ Change Target / Reset App</button>
+    </div>
+  </div>
+
+  <!-- PIN RESET MODAL -->
+  <div class="modal-overlay" id="pin-reset-modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🔑 Reset PIN</h2>
+        <button class="close-btn" onclick="closePinResetModal()">✕</button>
+      </div>
+      <div class="reset-confirm-box">
+        <p style="color:var(--subtext-color);font-size:0.95rem;">Are you sure you want to reset your PIN? You will need to set a new 4-digit PIN next time.</p>
+        <div class="reset-actions">
+          <button class="btn-cancel" onclick="closePinResetModal()">Cancel</button>
+          <button class="btn-confirm-reset" onclick="confirmPinReset()">Yes, Reset</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -667,6 +752,18 @@
       const t = translations[currentLang];
       document.getElementById('lang-toggle-btn').innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
       document.getElementById('lang-toggle-btn-main').innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
+      // PIN screen buttons sync
+      const pinLangBtn = document.getElementById('pin-lang-btn');
+      if (pinLangBtn) pinLangBtn.innerText = currentLang === 'en' ? "🌐 हिंदी" : "🌐 English";
+      const pinThemeBtn = document.getElementById('pin-theme-btn');
+      if (pinThemeBtn) pinThemeBtn.innerText = currentTheme === 'dark' ? "🌙 Dark" : "☀️ Light";
+      // PIN subtitle language update
+      const pinSub = document.getElementById('pin-screen-subtitle');
+      if (pinSub) {
+        if (pinMode === 'setup') pinSub.innerText = currentLang === 'en' ? 'Set a new 4-digit PIN' : 'नया 4-अंकी PIN सेट करें';
+        else if (pinMode === 'confirm') pinSub.innerText = currentLang === 'en' ? 'Confirm your PIN' : 'PIN दोबारा दर्ज करें';
+        else pinSub.innerText = currentLang === 'en' ? 'Enter your 4-digit PIN' : 'अपना 4-अंकी PIN दर्ज करें';
+      }
 
       document.getElementById('txt-setup-title').innerText = t.setupTitle;
       document.getElementById('txt-setup-subtitle').innerText = t.setupSubtitle;
@@ -748,6 +845,269 @@
     function playClickSound(soundId = 'snd-tab') { playCustomSound(soundId, () => { initAudio(); }); }
     function playResetSound() { playCustomSound('snd-reset', () => { initAudio(); }); }
 
+    /* ========================================================
+       PIN LOCK SYSTEM
+       ======================================================== */
+    let pinBuffer = '';
+    let pinMode = 'verify'; // 'verify' | 'setup' | 'confirm'
+    let pinSetupFirst = '';
+
+    function playPinTap() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 800;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.18, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.08);
+      } catch(e) {}
+    }
+
+    function playPinError() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = 220;
+        osc.type = 'sawtooth';
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.25);
+      } catch(e) {}
+    }
+
+    function playPinSuccess() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        [600, 800, 1000].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          const t = ctx.currentTime + i * 0.08;
+          gain.gain.setValueAtTime(0.15, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+          osc.start(t); osc.stop(t + 0.1);
+        });
+      } catch(e) {}
+    }
+
+    function shufflePinKeypad() {
+      // Shuffle digits 1-9, place in 9 slots, then 0 in middle of last row
+      const digits = ['1','2','3','4','5','6','7','8','9'];
+      for (let i = digits.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [digits[i], digits[j]] = [digits[j], digits[i]];
+      }
+      const grid = document.getElementById('pin-keypad-grid');
+      grid.innerHTML = '';
+      digits.forEach(d => {
+        const btn = document.createElement('button');
+        btn.className = 'pin-key';
+        btn.textContent = d;
+        btn.onclick = () => pinKey(d);
+        grid.appendChild(btn);
+      });
+      // Last row: empty, 0, empty
+      const empty1 = document.createElement('button');
+      empty1.className = 'pin-key empty';
+      const zeroBtn = document.createElement('button');
+      zeroBtn.className = 'pin-key';
+      zeroBtn.textContent = '0';
+      zeroBtn.onclick = () => pinKey('0');
+      const empty2 = document.createElement('button');
+      empty2.className = 'pin-key empty';
+      grid.appendChild(empty1);
+      grid.appendChild(zeroBtn);
+      grid.appendChild(empty2);
+    }
+
+    function updatePinThemeUI() {
+      const isDark = !document.body.classList.contains('light-mode');
+      document.getElementById('pin-theme-btn').innerText = isDark ? '🌙 Dark' : '☀️ Light';
+    }
+
+    function updatePinLangUI() {
+      const isHindi = currentLang === 'hi';
+      document.getElementById('pin-lang-btn').innerText = isHindi ? '🌐 English' : '🌐 हिंदी';
+    }
+
+    function updatePinDots() {
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById('pd' + i);
+        dot.classList.toggle('filled', i < pinBuffer.length);
+      }
+    }
+
+    function pinKey(digit) {
+      if (pinBuffer.length >= 4) return;
+      playPinTap();
+
+      pinBuffer += digit;
+      updatePinDots();
+      document.getElementById('pin-error-msg').innerText = '';
+
+      if (pinBuffer.length === 4) {
+        setTimeout(() => handlePinComplete(), 150);
+      }
+    }
+
+    function pinDelete() {
+      if (pinBuffer.length === 0) return;
+      playPinTap();
+      pinBuffer = pinBuffer.slice(0, -1);
+      updatePinDots();
+      document.getElementById('pin-error-msg').innerText = '';
+    }
+
+    function handlePinComplete() {
+      const savedPin = localStorage.getItem('smart_save_pin');
+
+      if (pinMode === 'verify') {
+        if (pinBuffer === savedPin) {
+          playPinSuccess();
+          document.getElementById('pin-lock-screen').style.display = 'none';
+          proceedAfterPin();
+        } else {
+          playPinError();
+          document.getElementById('pin-error-msg').innerText = '❌ Wrong PIN. Try again.';
+          document.querySelectorAll('.pin-dot').forEach(d => {
+            d.style.animation = 'none';
+            setTimeout(() => { d.style.animation = 'pinShake 0.4s ease'; }, 10);
+          });
+          setTimeout(() => {
+            pinBuffer = '';
+            updatePinDots();
+            shufflePinKeypad();
+            document.getElementById('pin-error-msg').innerText = '';
+          }, 600);
+        }
+      } else if (pinMode === 'setup') {
+        pinSetupFirst = pinBuffer;
+        pinBuffer = '';
+        updatePinDots();
+        shufflePinKeypad();
+        document.getElementById('pin-screen-subtitle').innerText = 'Confirm your PIN';
+        pinMode = 'confirm';
+      } else if (pinMode === 'confirm') {
+        if (pinBuffer === pinSetupFirst) {
+          playPinSuccess();
+          localStorage.setItem('smart_save_pin', pinBuffer);
+          document.getElementById('pin-lock-screen').style.display = 'none';
+          proceedAfterPin();
+        } else {
+          playPinError();
+          document.getElementById('pin-error-msg').innerText = '❌ PINs don\'t match. Try again.';
+          setTimeout(() => {
+            pinBuffer = ''; pinSetupFirst = '';
+            updatePinDots();
+            shufflePinKeypad();
+            document.getElementById('pin-error-msg').innerText = '';
+            document.getElementById('pin-screen-subtitle').innerText = currentLang === 'en' ? 'Set a new 4-digit PIN' : 'नया 4-अंकी PIN सेट करें';
+            pinMode = 'setup';
+          }, 700);
+        }
+      }
+    }
+
+    function proceedAfterPin() {
+      // Continue normal app init after PIN success
+      _initAppAfterPin();
+    }
+
+    function showPinScreen() {
+      const savedPin = localStorage.getItem('smart_save_pin');
+      pinBuffer = ''; pinSetupFirst = '';
+      updatePinDots();
+      shufflePinKeypad();
+      document.getElementById('pin-error-msg').innerText = '';
+      const screen = document.getElementById('pin-lock-screen');
+      screen.style.display = 'flex';
+      updatePinThemeUI();
+      updatePinLangUI();
+
+      // Show "Forgot PIN?" only in verify mode (when PIN already exists)
+      const forgotBtn = document.getElementById('forgot-pin-btn');
+
+      if (!savedPin) {
+        pinMode = 'setup';
+        document.getElementById('pin-screen-subtitle').innerText = 'Set a new 4-digit PIN';
+        forgotBtn.style.display = 'none';
+      } else {
+        pinMode = 'verify';
+        document.getElementById('pin-screen-subtitle').innerText = 'Enter your 4-digit PIN';
+        forgotBtn.style.display = 'block';
+      }
+    }
+
+    async function forgotPinWithDeviceAuth() {
+      const msgBox = document.getElementById('pin-error-msg');
+
+      // Check WebAuthn support
+      if (!window.PublicKeyCredential) {
+        msgBox.style.color = '#f59e0b';
+        msgBox.innerText = '⚠️ Device auth not supported on this browser.';
+        return;
+      }
+
+      try {
+        msgBox.style.color = '#38bdf8';
+        msgBox.innerText = '🔐 Verify with device lock...';
+
+        // WebAuthn: triggers device PIN / fingerprint / pattern / face
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+
+        const credential = await navigator.credentials.get({
+          publicKey: {
+            challenge: challenge,
+            timeout: 60000,
+            userVerification: 'required', // forces device auth (PIN/fingerprint/pattern)
+            rpId: window.location.hostname,
+            allowCredentials: [] // empty = any registered credential or device auth
+          }
+        });
+
+        // If we reach here = device auth passed
+        msgBox.style.color = '#10b981';
+        msgBox.innerText = '✅ Verified!';
+        setTimeout(() => {
+          localStorage.removeItem('smart_save_pin');
+          showPinScreen(); // Will now go to setup mode
+        }, 600);
+
+      } catch (err) {
+        if (err.name === 'NotAllowedError') {
+          // User cancelled or failed auth
+          msgBox.style.color = '#ef4444';
+          msgBox.innerText = '❌ Authentication failed or cancelled.';
+        } else if (err.name === 'InvalidStateError' || err.name === 'NotSupportedError') {
+          // No registered credential — fallback: ask user to confirm via prompt
+          msgBox.style.color = '#f59e0b';
+          msgBox.innerText = '';
+          const confirmed = confirm('Verify your identity to reset PIN.\n\nAre you the owner of this device?');
+          if (confirmed) {
+            localStorage.removeItem('smart_save_pin');
+            showPinScreen();
+          }
+        } else {
+          msgBox.style.color = '#f59e0b';
+          msgBox.innerText = '⚠️ Could not trigger device auth. Try again.';
+        }
+        setTimeout(() => {
+          msgBox.style.color = '#ef4444';
+          msgBox.innerText = '';
+        }, 2500);
+      }
+    }
+
     let userConfig = SecureStorage.getItem('my_savings_config_v10');
     let state = SecureStorage.getItem('my_savings_state_v10');
     let boxes = [];
@@ -778,7 +1138,7 @@
 
     function capitalizeName(str) { return str.replace(/\b\w/g, l => l.toUpperCase()); }
 
-    function initApp() {
+    function _initAppAfterPin() {
       applyThemeAndLangUI();
       if (!userConfig) {
         document.getElementById('setup-view').style.display = 'block';
@@ -786,7 +1146,7 @@
       } else {
         document.getElementById('setup-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
-        
+
         document.getElementById('app-title-header').innerText = `₹${userConfig.target.toLocaleString('en-IN')} Savings Tracker`;
         const t = translations[currentLang];
         document.getElementById('welcome-user-msg').innerHTML = `${t.welcome}, <span class="user-highlight">${userConfig.name}</span>!`;
@@ -808,6 +1168,11 @@
 
         checkAndShowAdPopup();
       }
+    }
+
+    function initApp() {
+      applyThemeAndLangUI();
+      showPinScreen();
     }
 
     function completeSetup() {
@@ -1018,6 +1383,23 @@
       if (saved < target) { hasTriggeredSuccess = false; pendingSuccessTrigger = false; }
       updateFilterCounts();
       SecureStorage.setItem('my_savings_state_v10', state);
+    }
+
+    function openPinResetModal() {
+      playClickSound('snd-tab');
+      document.getElementById('pin-reset-modal').style.display = 'flex';
+    }
+
+    function closePinResetModal() {
+      document.getElementById('pin-reset-modal').style.display = 'none';
+    }
+
+    function confirmPinReset() {
+      playClickSound('snd-reset');
+      localStorage.removeItem('smart_save_pin');
+      closePinResetModal();
+      // Show PIN setup screen immediately
+      showPinScreen();
     }
 
     function openResetModal() { playClickSound('snd-btn'); document.getElementById('reset-modal').style.display = 'flex'; }
