@@ -1000,6 +1000,7 @@
         if (pinBuffer === pinSetupFirst) {
           playPinSuccess();
           localStorage.setItem('smart_save_pin', pinBuffer);
+          registerDeviceCredential(); // Register device biometric/PIN for forgot flow
           document.getElementById('pin-lock-screen').style.display = 'none';
           proceedAfterPin();
         } else {
@@ -1047,13 +1048,47 @@
       }
     }
 
+    async function registerDeviceCredential() {
+      if (!window.PublicKeyCredential) return;
+      try {
+        const challenge = new Uint8Array(32);
+        crypto.getRandomValues(challenge);
+        const userId = new Uint8Array(16);
+        crypto.getRandomValues(userId);
+
+        const credential = await navigator.credentials.create({
+          publicKey: {
+            challenge: challenge,
+            rp: { name: "Smart Save", id: window.location.hostname },
+            user: { id: userId, name: "smartsave-user", displayName: "Smart Save User" },
+            pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+            authenticatorSelection: {
+              authenticatorAttachment: "platform",
+              userVerification: "required",
+              requireResidentKey: false
+            },
+            timeout: 60000
+          }
+        });
+
+        // Store credential ID in localStorage
+        const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+        localStorage.setItem('smart_save_webauthn_cred', credId);
+      } catch(e) {
+        // WebAuthn not supported or user declined — silently skip
+        console.log('WebAuthn registration skipped:', e.message);
+      }
+    }
+
     async function forgotPinWithDeviceAuth() {
       const msgBox = document.getElementById('pin-error-msg');
+      const credIdB64 = localStorage.getItem('smart_save_webauthn_cred');
 
-      // Check WebAuthn support
-      if (!window.PublicKeyCredential) {
+      if (!window.PublicKeyCredential || !credIdB64) {
+        // Fallback if WebAuthn not registered
         msgBox.style.color = '#f59e0b';
-        msgBox.innerText = '⚠️ Device auth not supported on this browser.';
+        msgBox.innerText = '⚠️ Device auth not set up. Please reinstall the app.';
+        setTimeout(() => { msgBox.innerText = ''; }, 2500);
         return;
       }
 
@@ -1061,50 +1096,38 @@
         msgBox.style.color = '#38bdf8';
         msgBox.innerText = '🔐 Verify with device lock...';
 
-        // WebAuthn: triggers device PIN / fingerprint / pattern / face
+        const credIdBytes = Uint8Array.from(atob(credIdB64), c => c.charCodeAt(0));
         const challenge = new Uint8Array(32);
         crypto.getRandomValues(challenge);
 
-        const credential = await navigator.credentials.get({
+        await navigator.credentials.get({
           publicKey: {
             challenge: challenge,
-            timeout: 60000,
-            userVerification: 'required', // forces device auth (PIN/fingerprint/pattern)
             rpId: window.location.hostname,
-            allowCredentials: [] // empty = any registered credential or device auth
+            allowCredentials: [{
+              type: 'public-key',
+              id: credIdBytes.buffer,
+              transports: ['internal']
+            }],
+            userVerification: 'required',
+            timeout: 60000
           }
         });
 
-        // If we reach here = device auth passed
+        // Device auth passed
         msgBox.style.color = '#10b981';
         msgBox.innerText = '✅ Verified!';
         setTimeout(() => {
           localStorage.removeItem('smart_save_pin');
-          showPinScreen(); // Will now go to setup mode
+          showPinScreen();
         }, 600);
 
-      } catch (err) {
-        if (err.name === 'NotAllowedError') {
-          // User cancelled or failed auth
-          msgBox.style.color = '#ef4444';
-          msgBox.innerText = '❌ Authentication failed or cancelled.';
-        } else if (err.name === 'InvalidStateError' || err.name === 'NotSupportedError') {
-          // No registered credential — fallback: ask user to confirm via prompt
-          msgBox.style.color = '#f59e0b';
-          msgBox.innerText = '';
-          const confirmed = confirm('Verify your identity to reset PIN.\n\nAre you the owner of this device?');
-          if (confirmed) {
-            localStorage.removeItem('smart_save_pin');
-            showPinScreen();
-          }
-        } else {
-          msgBox.style.color = '#f59e0b';
-          msgBox.innerText = '⚠️ Could not trigger device auth. Try again.';
-        }
-        setTimeout(() => {
-          msgBox.style.color = '#ef4444';
-          msgBox.innerText = '';
-        }, 2500);
+      } catch(err) {
+        msgBox.style.color = '#ef4444';
+        msgBox.innerText = err.name === 'NotAllowedError'
+          ? '❌ Authentication cancelled or failed.'
+          : '⚠️ Could not verify. Try again.';
+        setTimeout(() => { msgBox.style.color = '#ef4444'; msgBox.innerText = ''; }, 2500);
       }
     }
 
@@ -1397,9 +1420,9 @@
     function confirmPinReset() {
       playClickSound('snd-reset');
       localStorage.removeItem('smart_save_pin');
+      localStorage.removeItem('smart_save_webauthn_cred');
       closePinResetModal();
-      // Show PIN setup screen immediately
-      showPinScreen();
+      showPinScreen(); // Will trigger registerDeviceCredential on new PIN setup
     }
 
     function openResetModal() { playClickSound('snd-btn'); document.getElementById('reset-modal').style.display = 'flex'; }
